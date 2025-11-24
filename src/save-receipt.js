@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { getStoredToken } from './login-gog.js';
 
 /**
  * Saves the given URL as a PDF using Puppeteer.
@@ -11,6 +12,8 @@ import puppeteer from 'puppeteer';
  * @param {('load'|'domcontentloaded'|'networkidle0'|'networkidle2')} [options.waitUntil='networkidle0'] - Navigation waitUntil event.
  * @param {number} [options.timeout=60000] - Navigation timeout in ms.
  * @param {boolean|"new"} [options.headless='new'] - Puppeteer headless mode.
+ * @param {boolean} [options.useToken=true] - Whether to attach the stored login token to requests.
+ * @param {string} [options.tokenPath] - Optional path to token.json.
  * @returns {Promise<string>} The output PDF path.
  */
 export async function saveReceipt({
@@ -21,7 +24,9 @@ export async function saveReceipt({
   viewport = { width: 1280, height: 800 },
   waitUntil = 'networkidle0',
   timeout = 60000,
-  headless = 'new'
+  headless = 'new',
+  useToken = true,
+  tokenPath
 } = {}) {
   if (!url) throw new Error('Missing required option: url');
 
@@ -29,6 +34,16 @@ export async function saveReceipt({
   try {
     const page = await browser.newPage();
     await page.setViewport(viewport);
+
+    // If requested, try to attach the stored token so authenticated pages can be accessed.
+    if (useToken) {
+      const stored = getStoredToken({ tokenPath });
+      const bearer = stored?.access_token || stored?.code; // prefer proper access token, fallback to legacy stored code
+      if (bearer) {
+        await page.setExtraHTTPHeaders({ 'Authorization': `Bearer ${bearer}` });
+      }
+    }
+
     await page.goto(url, { waitUntil, timeout });
     await page.pdf({ path: out, format, printBackground });
     return out;

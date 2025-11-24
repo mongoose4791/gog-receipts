@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 import { saveReceipt } from './save-receipt.js';
+import { loginFlow } from './login-gog.js';
 
 function printHelp() {
   const help = `
 gog-receipts - Downloads and stores GOG purchase receipts for easy access
 
 Usage:
+  gog-receipts login [code|url]
   gog-receipts <url> [--out <file>] [--format <A4|Letter|...>] [--no-background] [--viewport <WxH>] [--wait <event>] [--timeout <ms>] [--headful]
 
 Args:
   url                 The URL of the page to save as PDF.
+  code|url            For login: either the redirect URL after logging in at GOG, or the code value itself.
 
 Options:
   --out, -o           Output PDF file path (default: page.pdf)
@@ -26,7 +29,9 @@ Options:
 
 function parseArgs(argv) {
   const opts = {
-    url: undefined,
+    subcommand: undefined,
+    subArg: undefined,
+    url: 'https://www.gog.com/en/account/settings/orders',
     out: 'page.pdf',
     format: 'A4',
     printBackground: true,
@@ -40,6 +45,13 @@ function parseArgs(argv) {
   while (parts.length) {
     const token = parts.shift();
     if (token === '-h' || token === '--help') return { help: true };
+    if (!opts.subcommand && (token === 'login')) {
+      opts.subcommand = token;
+      // next positional (if any) becomes subArg (code or url)
+      if (parts.length && !parts[0].startsWith('-')) opts.subArg = parts.shift();
+      // ignore the rest of flags for login
+      continue;
+    }
     if (!token.startsWith('-') && !opts.url) { opts.url = token; continue; }
     switch (token) {
       case '--out':
@@ -76,6 +88,13 @@ function parseArgs(argv) {
 async function run() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) { printHelp(); process.exit(0); }
+
+  // Handle subcommands first
+  if (args.subcommand === 'login') {
+    await loginFlow({ input: args.subArg });
+    process.exit(0);
+  }
+
   if (args.error || !args.url) { printHelp(); process.exit(1); }
 
   const out = await saveReceipt({
