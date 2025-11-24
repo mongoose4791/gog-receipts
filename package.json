@@ -1,0 +1,27 @@
+{
+  "name": "gog-receipts",
+  "version": "1.0.0",
+  "description": "A simple command-line tool and Node.js library for automatically downloading and archiving your official GOG purchase receipts. Keeps a local, organized record of your legally purchased games for tax, documentation, and long-term preservation purposes.",
+  "keywords": [
+    "gog",
+    "receipt",
+    "game",
+    "invoice",
+    "download"
+  ],
+  "homepage": "https://github.com/mongoose4791/gog-receipts#readme",
+  "bugs": {
+    "url": "https://github.com/mongoose4791/gog-receipts/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mongoose4791/gog-receipts.git"
+  },
+  "license": "Hippocratic-2.1",
+  "author": "mongoose4791",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
