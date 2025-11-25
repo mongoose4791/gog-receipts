@@ -26,7 +26,6 @@ export async function saveReceipt({
   timeout = 60000,
   headless = 'new',
   useToken = true,
-  tokenPath
 } = {}) {
   if (!url) throw new Error('Missing required option: url');
 
@@ -37,7 +36,7 @@ export async function saveReceipt({
 
     // If requested, try to attach the stored token so authenticated pages can be accessed.
     if (useToken) {
-      const stored = getStoredToken({ tokenPath });
+      const stored = getStoredToken();
       const bearer = stored?.access_token || stored?.code; // prefer proper access token, fallback to legacy stored code
       if (bearer) {
         await page.setExtraHTTPHeaders({ 'Authorization': `Bearer ${bearer}` });

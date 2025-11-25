@@ -45,7 +45,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
     const loginCodeFile = await storeLoginCode(loginCode);
     process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFile + '\n');
 
-    const token = await exchangeCodeForToken(loginCode);
+    const token = await exchangeLoginCodeForToken(loginCode);
     const tokenFile = await storeToken(token);
     process.stdout.write('Logged in successfully. Token stored at: ' + tokenFile + '\n');
 
@@ -84,14 +84,21 @@ function defaultConfigPath(filename) {
 }
 
 export function extractLoginCode(codeOrUrl) {
-    if (!codeOrUrl) throw new Error('No URL provided.');
+    if (!codeOrUrl) throw new Error('No code or URL provided.');
 
-    const urlObj = new URL(codeOrUrl);
-    const code = urlObj.searchParams.get('code');
-
-    if (!code) throw new Error('The URL does not contain a valid code.');
-
-    return code;
+    const input = String(codeOrUrl).trim();
+    // Try to parse as URL first
+    try {
+        const urlObj = new URL(input);
+        const codeFromUrl = urlObj.searchParams.get('code');
+        if (codeFromUrl) return codeFromUrl;
+        // If it's a URL but no code param, treat as error
+        throw new Error('The URL does not contain a valid code.');
+    } catch {
+        // Not a URL — assume the input itself is the code
+        if (!input) throw new Error('Empty code provided.');
+        return input;
+    }
 }
 
 export async function storeLoginCode(loginCode) {
@@ -108,20 +115,24 @@ export async function storeLoginCode(loginCode) {
     return file;
 }
 
-export function getStoredToken({tokenPath} = {}) {
+export function getStoredToken() {
     try {
-        const file = tokenPath || defaultConfigPath(LOGIN_CODE_FILE_NAME);
+        const file = defaultConfigPath(TOKEN_FILE_NAME);
         if (!fs.existsSync(file)) return null;
         const raw = fs.readFileSync(file, 'utf8');
         const data = JSON.parse(raw);
-        if (!data || typeof data.code !== 'string' || !data.code) return null;
+        // Accept modern token shape or fallback legacy code-based shape
+        const hasAccess = typeof data.access_token === 'string' && data.access_token.length > 0;
+        const hasRefresh = typeof data.refresh_token === 'string' && data.refresh_token.length > 0;
+        const hasCode = typeof data.code === 'string' && data.code.length > 0;
+        if (!(hasAccess || hasRefresh || hasCode)) return null;
         return data;
     } catch {
         return null;
     }
 }
 
-async function exchangeCodeForToken(loginCode) {
+async function exchangeLoginCodeForToken(loginCode) {
     const res = await fetch(getTokenUrl(loginCode).toString(), {
         method: 'GET',
     });
@@ -136,7 +147,7 @@ async function exchangeCodeForToken(loginCode) {
 }
 
 async function storeToken(token) {
-    if (!token) throw new Error('Missing code to store.');
+    if (!token) throw new Error('Missing token to store.');
     const file = defaultConfigPath(TOKEN_FILE_NAME);
     const dir = path.dirname(file);
     fs.mkdirSync(dir, {recursive: true});
@@ -146,5 +157,5 @@ async function storeToken(token) {
 }
 
 export default {
-    extractCode: extractLoginCode, storeToken: storeLoginCode, getStoredToken, loginFlow,
+    extractCode: extractLoginCode, storeToken, getStoredToken, loginFlow,
 };
