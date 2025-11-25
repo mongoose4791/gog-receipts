@@ -76,7 +76,7 @@ async function tryRefreshWithStoredToken() {
             try {
                 const refreshed = await refreshAccessToken(existing.refresh_token);
                 const tokenFilePath = await storeToken(refreshed);
-                process.stdout.write('Session refreshed. Token saved to: ' + tokenFilePath + '\n');
+                process.stdout.write('Session refreshed. New token saved to: ' + tokenFilePath + '\n');
                 return refreshed;
             } catch (e) {
                 process.stdout.write('Previous session expired. Starting fresh login.\n');

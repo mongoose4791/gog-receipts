@@ -29,7 +29,7 @@
     "cli": "node ./src/cli.js",
     "start": "node ./src/cli.js",
     "login": "node ./src/cli.js login",
-    "browser:install": "npx puppeteer browsers install chrome"
+    "browser:install": "npx puppeteer browsers install firefox"
   },
   "dependencies": {
     "puppeteer": "^24.31.0"

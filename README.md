@@ -41,7 +41,7 @@ Follow these steps to get the project running locally.
 
 3. Install the browser used by Puppeteer
 
-   This project uses Puppeteer for automating receipt downloads. Install the managed Chrome binary once using the provided script:
+   This project uses Puppeteer with Firefox for automating receipt downloads. Install the managed Firefox binary once using the provided script:
 
    ```sh
    npm run browser:install

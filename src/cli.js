@@ -58,7 +58,7 @@ function parseArgs(argv) {
         viewport: {width: 1280, height: 800},
         waitUntil: 'networkidle0',
         timeout: 60000,
-        headless: 'new'
+        headless: true
     };
 
     const parts = [...argv];
