@@ -22,13 +22,15 @@ export async function loginFlow(loginCodeUrl = undefined) {
     process.stdout.write('Authenticating with GOG...\n');
 
     // 1) Try existing token and refresh if possible
+    process.stdout.write('Try existing token and refresh if possible...\n');
     const refreshed = await tryRefreshWithStoredToken();
     if (refreshed) {
         process.stdout.write('Welcome back! Session restored.\n');
         return refreshed;
     }
 
-    // 2) If we have a stored login code already, try exchanging it before prompting
+    // 2) If we have a stored login code already, try exchanging it
+    process.stdout.write('If we have a stored login code already, try exchanging it...\n');
     if (!loginCodeUrl) {
         const tokenFromStoredCode = await tryExchangeStoredLoginCode();
         if (tokenFromStoredCode) {
@@ -38,13 +40,15 @@ export async function loginFlow(loginCodeUrl = undefined) {
     }
 
     // 3) If the caller provided a login URL/code, use it
+    process.stdout.write('If the caller provided a login URL/code, use it...\n');
     if (loginCodeUrl) {
         const tokenFromProvided = await handleProvidedLoginCode(loginCodeUrl);
         process.stdout.write('Login successful using provided code.\n');
         return tokenFromProvided;
     }
 
-    // 4) Prompt for login code/URL interactively
+    // 4) If nothing works, prompt for login code/URL interactively
+    process.stdout.write('If nothing works, prompt for login code/URL interactively...\n');
     const tokenFromInteractive = await handleInteractiveLogin();
     process.stdout.write('Login successful.\n');
     return tokenFromInteractive;
