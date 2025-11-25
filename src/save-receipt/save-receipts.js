@@ -3,6 +3,60 @@ import {getStoredToken} from '../gog-login/gog-login.js';
 const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
 
 /**
+ * Wait until the page has settled enough that late async work and rendering are complete.
+ * Combines network idle wait, font readiness, and a couple of RAF ticks.
+ *
+ * @param {import('puppeteer').Page} page Puppeteer page instance.
+ * @param {number} timeout Timeout in milliseconds for network idle waiting.
+ * @returns {Promise<void>} Resolves when the page is considered settled.
+ */
+async function waitForPageSettled(page, timeout) {
+    try {
+        await page.waitForNetworkIdle({idleTime: 1000, timeout});
+    } catch {}
+
+    await page.evaluate(async () => {
+        try {
+            if (document.fonts && 'ready' in document.fonts) {
+                await document.fonts.ready;
+            }
+        } catch {}
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+}
+
+/**
+ * Collect absolute URLs for GOG email preview links directly from the DOM.
+ * Does not rely on CSS classes; uses a strict URL pattern filter instead.
+ * Pattern: https://www.gog.com/en/email/preview/<hex>
+ *
+ * @param {import('puppeteer').Page} page Puppeteer page instance.
+ * @returns {Promise<string[]>} List of unique, absolute URLs that match the pattern.
+ */
+async function collectPreviewLinks(page) {
+    return page.evaluate(() => {
+        const anchors = Array.from(document.querySelectorAll('a[href]'));
+        const base = 'https://www.gog.com';
+        const pattern = /^https:\/\/www\.gog\.com\/en\/email\/preview\/[0-9a-fA-F]+$/;
+        const out = new Set();
+        for (const a of anchors) {
+            const h = a.getAttribute('href');
+            if (!h) continue;
+            let abs;
+            try {
+                abs = new URL(h, base).href;
+            } catch {
+                continue;
+            }
+            if (pattern.test(abs)) {
+                out.add(abs);
+            }
+        }
+        return Array.from(out);
+    });
+}
+
+/**
  * Save the authenticated GOG Orders page as a PDF using Puppeteer.
  *
  * Note: The destination URL is fixed to the Orders page; this function no longer accepts a url parameter.
@@ -30,7 +84,7 @@ export async function saveReceipts({
     // const browser = await puppeteer.launch({headless: false, product: 'firefox'});
     const browser = await puppeteer.launch({
         // product: 'firefox',
-        headless: false,
+        headless,
         devtools: false,
         args: ['--no-sandbox', '--incognito', '--disable-web-security']
     })
@@ -49,6 +103,15 @@ export async function saveReceipts({
         }
 
         await page.goto(ORDERS_URL, {waitUntil, timeout});
+
+        // Wait until the page is fully settled before scraping/generating output.
+        await waitForPageSettled(page, timeout);
+
+        // Collect preview links by pattern and print to stdout.
+        const absoluteUrls = await collectPreviewLinks(page);
+        for (const url of absoluteUrls) {
+            console.log(url);
+        }
 
         await page.pdf({path: out, format: 'A4', printBackground});
         return out;
