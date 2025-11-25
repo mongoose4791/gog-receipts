@@ -24,7 +24,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
     // 1) Try existing token and refresh if possible
     const refreshed = await tryRefreshWithStoredToken();
     if (refreshed) {
-        process.stdout.write('Authentication handled by: refreshed existing token.\n');
+        process.stdout.write('Welcome back! Session restored.\n');
         return refreshed;
     }
 
@@ -32,7 +32,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
     if (!loginCodeUrl) {
         const tokenFromStoredCode = await tryExchangeStoredLoginCode();
         if (tokenFromStoredCode) {
-            process.stdout.write('Authentication handled by: exchanged previously stored login code.\n');
+            process.stdout.write('Restored session from saved login code.\n');
             return tokenFromStoredCode;
         }
     }
@@ -40,13 +40,13 @@ export async function loginFlow(loginCodeUrl = undefined) {
     // 3) If the caller provided a login URL/code, use it
     if (loginCodeUrl) {
         const tokenFromProvided = await handleProvidedLoginCode(loginCodeUrl);
-        process.stdout.write('Authentication handled by: provided login URL/code.\n');
+        process.stdout.write('Login successful using provided code.\n');
         return tokenFromProvided;
     }
 
     // 4) Prompt for login code/URL interactively
     const tokenFromInteractive = await handleInteractiveLogin();
-    process.stdout.write('Authentication handled by: interactive prompt URL/code.\n');
+    process.stdout.write('Login successful.\n');
     return tokenFromInteractive;
 }
 
@@ -57,10 +57,10 @@ async function tryRefreshWithStoredToken() {
             try {
                 const refreshed = await refreshAccessToken(existing.refresh_token);
                 const tokenFilePath = await storeToken(refreshed);
-                process.stdout.write('Existing GOG token refreshed successfully. Stored at: ' + tokenFilePath + '\n');
+                process.stdout.write('Session refreshed. Token saved to: ' + tokenFilePath + '\n');
                 return refreshed;
             } catch (e) {
-                process.stdout.write('Token refresh failed. Proceeding to login code flow. Reason: ' + (e?.message || e) + '\n');
+                process.stdout.write('Previous session expired. Starting fresh login. (Details: ' + (e?.message || e) + ')\n');
                 return null;
             }
         }
@@ -76,11 +76,11 @@ async function tryExchangeStoredLoginCode() {
         if (stored?.loginCode) {
             const token = await exchangeLoginCodeForToken(stored.loginCode);
             const tokenFilePath = await storeToken(token);
-            process.stdout.write('Stored GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
+            process.stdout.write('Saved login code valid. Token saved to: ' + tokenFilePath + '\n');
             return token;
         }
     } catch (e) {
-        process.stdout.write('Exchanging stored login code failed, will prompt for a new one. Reason: ' + (e?.message || e) + '\n');
+        process.stdout.write('Saved login code failed. You need to log in manually. (Details: ' + (e?.message || e) + ')\n');
     }
     return null;
 }
@@ -88,11 +88,11 @@ async function tryExchangeStoredLoginCode() {
 async function handleProvidedLoginCode(loginCodeUrl) {
     const loginCode = extractLoginCode(loginCodeUrl);
     const loginCodeFilePath = await storeLoginCode(loginCode);
-    process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFilePath + '\n');
+    process.stdout.write('\nLogin code extracted and saved to: ' + loginCodeFilePath + '\n');
 
     const token = await exchangeLoginCodeForToken(loginCode);
     const tokenFilePath = await storeToken(token);
-    process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
+    process.stdout.write('Token exchange successful. Saved to: ' + tokenFilePath + '\n');
     return token;
 }
 
@@ -100,11 +100,11 @@ async function handleInteractiveLogin() {
     const url = await promptForLoginCodeUrl();
     const loginCode = extractLoginCode(url);
     const loginCodeFile = await storeLoginCode(loginCode);
-    process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFile + '\n');
+    process.stdout.write('\nLogin code extracted and saved to: ' + loginCodeFile + '\n');
 
     const token = await exchangeLoginCodeForToken(loginCode);
     const tokenFile = await storeToken(token);
-    process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFile + '\n');
+    process.stdout.write('Token exchange successful. Saved to: ' + tokenFile + '\n');
     return token;
 }
 
