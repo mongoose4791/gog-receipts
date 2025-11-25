@@ -9,11 +9,11 @@ import {loginFlow} from './gog-login/gog-login.js';
  */
 function printHelp() {
     const help = `
-gog-receipts - Download and store your GOG purchase receipts as PDFs or HTML
+gog-receipts - Download and store your GOG purchase receipts as PDFs
 
 Usage:
   gog-receipts login [code|url]
-  gog-receipts [--out <file>] [--no-background] [--viewport <WxH>] [--wait <event>] [--timeout <ms>] [--headful]
+  gog-receipts [--receipts-dir <dir>] [--no-background] [--viewport <WxH>] [--wait <event>] [--timeout <ms>] [--headful]
 
 Commands:
   login               Authenticate with GOG. You can paste either the full redirect URL or just the code value.
@@ -31,7 +31,7 @@ Args:
   code|url            For login: either the redirect URL after logging in at GOG, or the code value itself.
 
 Options:
-  --out, -o           Output file path (default: page.pdf)
+  --receipts-dir, -d  Output directory for PDFs (default: receipts)
   --no-background     Do not print CSS backgrounds (default: false)
   --viewport, -v      Viewport size as WIDTHxHEIGHT (default: 1280x800)
   --wait, -w          WaitUntil event for navigation: load|domcontentloaded|networkidle0|networkidle2 (default: networkidle0)
@@ -53,7 +53,7 @@ function parseArgs(argv) {
     const opts = {
         subcommand: undefined,
         subArg: undefined,
-        out: 'page.pdf',
+        receiptsDir: 'receipts',
         printBackground: true,
         viewport: {width: 1280, height: 800},
         waitUntil: 'networkidle0',
@@ -84,9 +84,9 @@ function parseArgs(argv) {
         }
 
         switch (token) {
-            case '--out':
-            case '-o':
-                opts.out = parts.shift() ?? opts.out;
+            case '--receipts-dir':
+            case '-d':
+                opts.receiptsDir = parts.shift() ?? opts.receiptsDir;
                 break;
             case '--no-background':
                 opts.printBackground = false;
@@ -140,16 +140,16 @@ async function run() {
 
     const token = await loginFlow(args.subArg);
 
-    // If a URL is provided, proceed with PDF generation.
-    const out = await saveReceipts({
-        out: args.out,
+    // Generate PDFs for all discovered receipt preview pages.
+    const saved = await saveReceipts({
+        receiptsDir: args.receiptsDir,
         printBackground: args.printBackground,
         viewport: args.viewport,
         waitUntil: args.waitUntil,
         timeout: args.timeout,
         headless: args.headless,
     });
-    console.log(`PDF saved: ${out}`);
+    console.log(`Saved ${saved.length} receipt PDF(s) to ${args.receiptsDir}`);
 }
 
 run().catch(err => {

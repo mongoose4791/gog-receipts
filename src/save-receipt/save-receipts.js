@@ -1,4 +1,6 @@
 import puppeteer from 'puppeteer';
+import fs from 'node:fs';
+import path from 'node:path';
 import {getStoredToken} from '../gog-login/gog-login.js';
 const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
 
@@ -57,22 +59,23 @@ async function collectPreviewLinks(page) {
 }
 
 /**
- * Save the authenticated GOG Orders page as a PDF using Puppeteer.
+ * Save all GOG receipt preview pages as PDFs using Puppeteer.
  *
- * Note: The destination URL is fixed to the Orders page; this function no longer accepts a url parameter.
+ * Note: The destination URL for discovery is fixed to the Orders page; this function
+ * navigates there to discover all preview links and then renders each preview page to PDF.
  *
  * @param {Object} [options] Options for rendering and navigation.
- * @param {string} [options.out="page.pdf"] Output file path for the PDF.
+ * @param {string} [options.receiptsDir="receipts"] Output directory where PDFs will be stored. Created if missing.
  * @param {boolean} [options.printBackground=true] Include CSS backgrounds.
  * @param {{width:number,height:number}} [options.viewport={width:1280,height:800}] Viewport size.
  * @param {('load'|'domcontentloaded'|'networkidle0'|'networkidle2')} [options.waitUntil='networkidle0'] Navigation waitUntil event.
  * @param {number} [options.timeout=60000] Navigation timeout in ms.
  * @param {boolean} [options.headless=true] Puppeteer headless mode.
  * @param {boolean} [options.useToken=true] Whether to attach the stored login token to requests.
- * @returns {Promise<string>} The output PDF path.
+ * @returns {Promise<string[]>} The list of saved PDF paths.
  */
 export async function saveReceipts({
-   out = 'page.pdf',
+   receiptsDir = 'receipts',
    printBackground = true,
    viewport = {width: 1280, height: 800},
    waitUntil = 'networkidle0',
@@ -107,14 +110,28 @@ export async function saveReceipts({
         // Wait until the page is fully settled before scraping/generating output.
         await waitForPageSettled(page, timeout);
 
-        // Collect preview links by pattern and print to stdout.
+        // Collect preview links by pattern.
         const absoluteUrls = await collectPreviewLinks(page);
+
+        // Ensure output directory exists.
+        fs.mkdirSync(receiptsDir, {recursive: true});
+
+        /** @type {string[]} */
+        const saved = [];
+
+        // Reuse the same page for authenticated context; navigate to each preview and save as PDF.
         for (const url of absoluteUrls) {
-            console.log(url);
+            await page.goto(url, {waitUntil, timeout});
+            await waitForPageSettled(page, timeout);
+
+            // Derive a stable filename from the URL's last segment
+            const token = url.split('/').filter(Boolean).pop() || 'receipt';
+            const filePath = path.join(receiptsDir, `${token}.pdf`);
+            await page.pdf({path: filePath, format: 'A4', printBackground});
+            saved.push(filePath);
         }
 
-        await page.pdf({path: out, format: 'A4', printBackground});
-        return out;
+        return saved;
     } finally {
         await browser.close();
     }
