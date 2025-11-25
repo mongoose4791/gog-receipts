@@ -1,23 +1,27 @@
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+// Public entry for the gog-login module.
+// This file re-exports a curated API while delegating implementation to
+// smaller modules for clarity and testability.
 
-const LOGIN_CODE_FILE_NAME = 'loginCode.json';
-const TOKEN_FILE_NAME = 'token.json';
+import { getAuthUrl } from './urls.js';
+import { exchangeLoginCodeForToken, refreshAccessToken } from './exchange.js';
+import {
+    storeLoginCode,
+    getStoredLoginCode,
+    getStoredToken,
+    storeToken,
+} from './storage.js';
 
-// OAuth constants derived from docs: https://gogapidocs.readthedocs.io/en/latest/auth.html
-
-const AUTH_URL = 'https://auth.gog.com/auth';
-const AUTH__CLIENT_ID = '46899977096215655';
-const AUTH__REDIRECT_URI = 'https://embed.gog.com/on_login_success?origin=client';
-const AUTH__RESPONSE_TYPE = 'code';
-const AUTH__LAYOUT = 'client2';
-
-const TOKEN__URL = 'https://auth.gog.com/token';
-const TOKEN__CLIENT_SECRET = '9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9';
-const TOKEN__GRANT_TYPE__NEW_LOGIN = 'authorization_code';
-const TOKEN__GRANT_TYPE__REFRESH = 'refresh_token';
-
+/**
+ * High-level login flow.
+ * - Attempts to reuse an existing token (refresh if needed)
+ * - Otherwise tries any stored login code
+ * - Otherwise uses a provided URL/code
+ * - Otherwise prompts interactively
+ * Returns the token object on success and persists it to disk.
+ *
+ * @param {string|undefined} [loginCodeUrl] Optional raw code or callback URL containing ?code=.
+ * @returns {Promise<object>} The resolved token payload.
+ */
 export async function loginFlow(loginCodeUrl = undefined) {
     process.stdout.write('Authenticating with GOG...\n');
 
@@ -54,6 +58,17 @@ export async function loginFlow(loginCodeUrl = undefined) {
     return tokenFromInteractive;
 }
 
+/**
+ * Attempt to refresh an existing stored session token.
+ * - Reads token.json using getStoredToken()
+ * - If a refresh_token is present, calls refreshAccessToken()
+ * - On success, persists the refreshed token via storeToken()
+ * - On failure or absence, returns null
+ *
+ * Side effects: Writes token.json when refresh succeeds. Logs progress to stdout.
+ *
+ * @returns {Promise<object|null>} Refreshed token object or null when not available.
+ */
 async function tryRefreshWithStoredToken() {
     try {
         const existing = getStoredToken();
@@ -64,7 +79,7 @@ async function tryRefreshWithStoredToken() {
                 process.stdout.write('Session refreshed. Token saved to: ' + tokenFilePath + '\n');
                 return refreshed;
             } catch (e) {
-                process.stdout.write('Previous session expired. Starting fresh login. (Details: ' + (e?.message || e) + ')\n');
+                process.stdout.write('Previous session expired. Starting fresh login.\n');
                 return null;
             }
         }
@@ -74,6 +89,16 @@ async function tryRefreshWithStoredToken() {
     return null;
 }
 
+/**
+ * Try exchanging a previously saved one-time login code for a token.
+ * - Reads loginCode.json using getStoredLoginCode()
+ * - If present, exchanges it via exchangeLoginCodeForToken()
+ * - Persists the token to token.json on success
+ *
+ * Side effects: Writes token.json when exchange succeeds. Logs progress to stdout.
+ *
+ * @returns {Promise<object|null>} Token object if exchange worked, otherwise null.
+ */
 async function tryExchangeStoredLoginCode() {
     try {
         const stored = getStoredLoginCode();
@@ -84,11 +109,22 @@ async function tryExchangeStoredLoginCode() {
             return token;
         }
     } catch (e) {
-        process.stdout.write('Saved login code failed. You need to log in manually. (Details: ' + (e?.message || e) + ')\n');
+        process.stdout.write('Saved login code failed. You need to log in manually.\n');
     }
     return null;
 }
 
+/**
+ * Handle a caller-provided login code or URL.
+ * - Extracts the code using extractLoginCode()
+ * - Persists the code to loginCode.json
+ * - Exchanges the code for a token and persists token.json
+ *
+ * Side effects: Writes loginCode.json and token.json. Logs progress to stdout.
+ *
+ * @param {string} loginCodeUrl Raw code or full callback URL containing ?code=.
+ * @returns {Promise<object>} The token returned by the exchange endpoint.
+ */
 async function handleProvidedLoginCode(loginCodeUrl) {
     const loginCode = extractLoginCode(loginCodeUrl);
     const loginCodeFilePath = await storeLoginCode(loginCode);
@@ -100,6 +136,15 @@ async function handleProvidedLoginCode(loginCodeUrl) {
     return token;
 }
 
+/**
+ * Prompt the user for a login URL/code interactively and perform the exchange.
+ * - Prints instructions and waits for a single line from stdin
+ * - Extracts, stores, and exchanges the code
+ *
+ * Side effects: Writes loginCode.json and token.json. Reads stdin; logs to stdout.
+ *
+ * @returns {Promise<object>} The token returned by the exchange endpoint.
+ */
 async function handleInteractiveLogin() {
     const url = await promptForLoginCodeUrl();
     const loginCode = extractLoginCode(url);
@@ -112,6 +157,12 @@ async function handleInteractiveLogin() {
     return token;
 }
 
+/**
+ * Print interactive instructions and wait for the user to paste the final GOG redirect URL.
+ * The function resumes stdin, reads a single chunk, trims it, and resolves.
+ *
+ * @returns {Promise<string>} The pasted URL string from the user.
+ */
 async function promptForLoginCodeUrl() {
     return await new Promise((resolve) => {
         const url = getAuthUrl();
@@ -132,46 +183,13 @@ async function promptForLoginCodeUrl() {
     });
 }
 
-function getAuthUrl() {
-    const url = new URL(AUTH_URL);
-    url.searchParams.set('client_id', AUTH__CLIENT_ID);
-    url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
-    url.searchParams.set('response_type', AUTH__RESPONSE_TYPE);
-    url.searchParams.set('layout', AUTH__LAYOUT);
-    return url;
-}
-
-function getNewTokenUrl(loginCode) {
-    const url = new URL(TOKEN__URL);
-    url.searchParams.set('client_id', AUTH__CLIENT_ID);
-    url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
-    url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__NEW_LOGIN);
-    url.searchParams.set('code', loginCode);
-    url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
-    return url;
-}
-
-function getRefreshTokenUrl(refreshToken) {
-    const url = new URL(TOKEN__URL);
-    url.searchParams.set('client_id', AUTH__CLIENT_ID);
-    url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
-    url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__REFRESH);
-    url.searchParams.set('refresh_token', refreshToken);
-    return url;
-}
-
-function defaultConfigPath(filename) {
-    if (!filename) throw new Error('No filename provided.');
-    // Prefer XDG config home on Unix, fallback to ~/.config
-    const isWin = process.platform === 'win32';
-    if (isWin) {
-        const base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-        return path.join(base, 'gog-receipts', filename);
-    }
-    const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-    return path.join(base, 'gog-receipts', filename);
-}
-
+/**
+ * Extract the login code from either a raw code string or a callback URL.
+ * Throws if a URL is provided without a code parameter.
+ *
+ * @param {string} codeOrUrl Raw code string or full redirect URL.
+ * @returns {string} Extracted code string.
+ */
 export function extractLoginCode(codeOrUrl) {
     if (!codeOrUrl) throw new Error('No code or URL provided.');
 
@@ -196,88 +214,5 @@ export function extractLoginCode(codeOrUrl) {
     return input;
 }
 
-export async function storeLoginCode(loginCode) {
-    if (!loginCode) throw new Error('Missing code to store.');
-    const file = defaultConfigPath(LOGIN_CODE_FILE_NAME);
-    const dir = path.dirname(file);
-    fs.mkdirSync(dir, {recursive: true});
-
-    const payload = {
-        createdAt: new Date().toISOString(),
-        loginCode,
-    };
-    fs.writeFileSync(file, JSON.stringify(payload, null, 2), 'utf8');
-    return file;
-}
-
-export function getStoredLoginCode() {
-    try {
-        const file = defaultConfigPath(LOGIN_CODE_FILE_NAME);
-        if (!fs.existsSync(file)) return null;
-        const raw = fs.readFileSync(file, 'utf8');
-        const data = JSON.parse(raw);
-        if (typeof data?.loginCode === 'string' && data.loginCode.length > 0) return data;
-        return null;
-    } catch {
-        return null;
-    }
-}
-
-export function getStoredToken() {
-    try {
-        const file = defaultConfigPath(TOKEN_FILE_NAME);
-        if (!fs.existsSync(file)) return null;
-        const raw = fs.readFileSync(file, 'utf8');
-        const data = JSON.parse(raw);
-        // Accept modern token shape or fallback legacy code-based shape
-        const hasAccess = typeof data.access_token === 'string' && data.access_token.length > 0;
-        const hasRefresh = typeof data.refresh_token === 'string' && data.refresh_token.length > 0;
-        const hasCode = typeof data.code === 'string' && data.code.length > 0;
-        if (!(hasAccess || hasRefresh || hasCode)) return null;
-        return data;
-    } catch {
-        return null;
-    }
-}
-
-async function exchangeLoginCodeForToken(loginCode) {
-    const res = await fetch(getNewTokenUrl(loginCode).toString(), {
-        method: 'GET',
-    });
-
-    const txt = await res.text();
-
-    if (!res.ok) {
-        throw new Error(`Token fetch failed. Status: ${res.status}. Response: ${txt}`);
-    }
-
-    return JSON.parse(txt);
-}
-
-async function refreshAccessToken(refreshToken) {
-    const res = await fetch(getRefreshTokenUrl(refreshToken).toString(), {
-        method: 'GET',
-    });
-
-    const txt = await res.text();
-
-    if (!res.ok) {
-        throw new Error(`Token refresh failed. Status: ${res.status}. Response: ${txt}`);
-    }
-
-    return JSON.parse(txt);
-}
-
-async function storeToken(token) {
-    if (!token) throw new Error('Missing token to store.');
-    const file = defaultConfigPath(TOKEN_FILE_NAME);
-    const dir = path.dirname(file);
-    fs.mkdirSync(dir, {recursive: true});
-
-    fs.writeFileSync(file, JSON.stringify(token, null, 2), 'utf8');
-    return file;
-}
-
-export default {
-    extractCode: extractLoginCode, storeToken, getStoredToken, loginFlow,
-};
+// Re-export selected persistence helpers as part of the public API
+export { storeLoginCode, getStoredLoginCode, getStoredToken };

@@ -140,6 +140,3 @@ vite.config.ts.timestamp-*
 
 # IDEs
 .idea
-
-# NPM lockfile
-package-lock.json

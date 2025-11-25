@@ -2,13 +2,30 @@
 import { saveReceipt } from './save-receipt.js';
 import { loginFlow } from './gog-login/gog-login.js';
 
+/**
+ * Print CLI help text to stdout.
+ *
+ * @returns {void}
+ */
 function printHelp() {
   const help = `
-gog-receipts - Downloads and stores GOG purchase receipts for easy access
+gog-receipts - Download and store your GOG purchase receipts as PDFs
 
 Usage:
   gog-receipts login [code|url]
   gog-receipts <url> [--out <file>] [--format <A4|Letter|...>] [--no-background] [--viewport <WxH>] [--wait <event>] [--timeout <ms>] [--headful]
+
+Commands:
+  login               Authenticate with GOG. You can paste either the full redirect URL or just the code value.
+
+Login flow:
+  1. Run: gog-receipts login
+  2. Open the printed GOG login URL in your browser and sign in.
+  3. Copy the final redirect URL from your browser's address bar.
+  4. Paste it back into the CLI when prompted, or pass it as an argument to 'login'.
+  The tool will store two files under your config directory (XDG_CONFIG_HOME/APPDATA):
+    - loginCode.json: last one-time login code and timestamp
+    - token.json: token payload used to access your account
 
 Args:
   url                 The URL of the page to save as PDF.
@@ -27,6 +44,13 @@ Options:
   console.log(help);
 }
 
+/**
+ * Parse command-line arguments into an options object.
+ * Recognizes a 'login' subcommand and various flags for PDF saving.
+ *
+ * @param {string[]} argv Process arguments excluding the node and script path.
+ * @returns {object} Parsed options. May include { help: true } or { error: true }.
+ */
 function parseArgs(argv) {
   const opts = {
     subcommand: undefined,
@@ -91,6 +115,12 @@ function parseArgs(argv) {
   return opts;
 }
 
+/**
+ * CLI entry point. Parses args and executes either the login flow
+ * or the receipt saving command. Exits the process with appropriate code.
+ *
+ * @returns {Promise<void>} Resolves when the CLI completes or exits.
+ */
 async function run() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) { printHelp(); process.exit(0); }
