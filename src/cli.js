@@ -138,8 +138,6 @@ async function run() {
         process.exit(0);
     }
 
-    const token = await loginFlow(args.subArg);
-
     // Generate PDFs for all discovered receipt preview pages.
     const saved = await saveReceipts({
         receiptsDir: args.receiptsDir,
