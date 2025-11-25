@@ -1,9 +1,6 @@
 import puppeteer from 'puppeteer';
 import {getStoredToken} from '../gog-login/gog-login.js';
-// const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
-// const ORDERS_URL = 'https://www.gog.com/library/windows';
-// const ORDERS_URL = 'https://www.whatismybrowser.com/';
-const ORDERS_URL = 'https://www.gog.com/en/account';
+const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
 
 /**
  * Save the authenticated GOG Orders page as a PDF using Puppeteer.
@@ -30,7 +27,14 @@ export async function saveReceipts({
    useToken = true,
 } = {}) {
 
-    const browser = await puppeteer.launch({headless: false, product: 'firefox'});
+    // const browser = await puppeteer.launch({headless: false, product: 'firefox'});
+    const browser = await puppeteer.launch({
+        // product: 'firefox',
+        headless: false,
+        devtools: false,
+        args: ['--no-sandbox', '--incognito', '--disable-web-security']
+    })
+
     try {
         const page = await browser.newPage();
         await page.setViewport(viewport);
@@ -45,11 +49,8 @@ export async function saveReceipts({
         }
 
         await page.goto(ORDERS_URL, {waitUntil, timeout});
-        await new Promise(r => setTimeout(r, 5000));
 
-        await page.screenshot({type: 'png', path: "test.png", fullPage: true });
-
-        // await page.pdf({path: out, format: 'A4', printBackground});
+        await page.pdf({path: out, format: 'A4', printBackground});
         return out;
     } finally {
         await browser.close();
