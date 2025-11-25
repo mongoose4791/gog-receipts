@@ -20,13 +20,14 @@
   "license": "Hippocratic-3.0",
   "author": "mongoose4791",
   "type": "module",
-  "main": "index.js",
+  "main": "src/cli.js",
   "bin": {
     "gog-receipts": "./src/cli.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "cli": "node ./src/cli.js"
+    "test": "node --test",
+    "cli": "node ./src/cli.js",
+    "login": "node ./src/cli.js login"
   },
   "dependencies": {
     "puppeteer": "^24.31.0"

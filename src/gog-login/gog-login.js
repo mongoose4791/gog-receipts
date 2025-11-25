@@ -47,7 +47,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
 
     const token = await exchangeLoginCodeForToken(loginCode);
     const tokenFile = await storeToken(token);
-    process.stdout.write('Logged in successfully. Token stored at: ' + tokenFile + '\n');
+    process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFile + '\n');
 
     return {code: loginCode, tokenPath: tokenFile};
 }
@@ -61,7 +61,7 @@ function getAuthUrl() {
     return url;
 }
 
-function getTokenUrl(loginCode) {
+function getNewTokenUrl(loginCode) {
     const url = new URL(TOKEN__URL);
     url.searchParams.set('client_id', AUTH__CLIENT_ID);
     url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
@@ -87,18 +87,24 @@ export function extractLoginCode(codeOrUrl) {
     if (!codeOrUrl) throw new Error('No code or URL provided.');
 
     const input = String(codeOrUrl).trim();
-    // Try to parse as URL first
+    // Try to parse as URL first. Only treat it as non-URL if URL parsing throws.
+    let urlObj = null;
     try {
-        const urlObj = new URL(input);
+        urlObj = new URL(input);
+    } catch {
+        urlObj = null;
+    }
+
+    if (urlObj) {
         const codeFromUrl = urlObj.searchParams.get('code');
         if (codeFromUrl) return codeFromUrl;
         // If it's a URL but no code param, treat as error
         throw new Error('The URL does not contain a valid code.');
-    } catch {
-        // Not a URL — assume the input itself is the code
-        if (!input) throw new Error('Empty code provided.');
-        return input;
     }
+
+    // Not a URL — assume the input itself is the code
+    if (!input) throw new Error('Empty code provided.');
+    return input;
 }
 
 export async function storeLoginCode(loginCode) {
@@ -133,7 +139,7 @@ export function getStoredToken() {
 }
 
 async function exchangeLoginCodeForToken(loginCode) {
-    const res = await fetch(getTokenUrl(loginCode).toString(), {
+    const res = await fetch(getNewTokenUrl(loginCode).toString(), {
         method: 'GET',
     });
 

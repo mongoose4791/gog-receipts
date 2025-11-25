@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { saveReceipt } from './save-receipt.js';
-import { loginFlow } from './login-gog.js';
+import { loginFlow } from './gog-login/gog-login.js';
 
 function printHelp() {
   const help = `
