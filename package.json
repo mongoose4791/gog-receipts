@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/mongoose4791/gog-receipts.git"
   },
-  "license": "Hippocratic-2.1",
+  "license": "Hippocratic-3.0",
   "author": "mongoose4791",
   "type": "module",
   "main": "index.js",
