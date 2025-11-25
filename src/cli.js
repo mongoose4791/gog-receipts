@@ -44,15 +44,21 @@ function parseArgs(argv) {
   const parts = [...argv];
   while (parts.length) {
     const token = parts.shift();
+
     if (token === '-h' || token === '--help') return { help: true };
+
     if (!opts.subcommand && (token === 'login')) {
       opts.subcommand = token;
       // next positional (if any) becomes subArg (code or url)
-      if (parts.length && !parts[0].startsWith('-')) opts.subArg = parts.shift();
+      if (parts.length && !parts[0].startsWith('-')) {
+          opts.subArg = parts.shift();
+      }
       // ignore the rest of flags for login
       continue;
     }
+
     if (!token.startsWith('-') && !opts.url) { opts.url = token; continue; }
+
     switch (token) {
       case '--out':
       case '-o': opts.out = parts.shift() ?? opts.out; break;
@@ -91,7 +97,7 @@ async function run() {
 
   // Handle subcommands first
   if (args.subcommand === 'login') {
-    await loginFlow({ input: args.subArg });
+    await loginFlow(args.subArg);
     process.exit(0);
   }
 

@@ -1,171 +1,150 @@
-// Module to help with GOG authentication code retrieval and storage.
-//  - Show the AUTH_URL to the user
-//  - Ask the user to paste either the full redirected URL or just the code
-//  - Extract the "code" value and persist it as an auth token
-
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-export const AUTH_URL = 'https://auth.gog.com/auth?client_id=46899977096215655&redirect_uri=https%3A%2F%2Fembed.gog.com%2Fon_login_success%3Forigin%3Dclient&response_type=code&layout=client2';
+const LOGIN_CODE_FILE_NAME = 'loginCode.json';
+const TOKEN_FILE_NAME = 'token.json';
+
 // OAuth constants derived from docs: https://gogapidocs.readthedocs.io/en/latest/auth.html
-const TOKEN_URL = 'https://auth.gog.com/token';
-const CLIENT_ID = '46899977096215655';
-const REDIRECT_URI = 'https://embed.gog.com/on_login_success?origin=client';
 
-/**
- * Extracts the GOG auth code from either a direct code string or a full redirect URL.
- * @param {string} codeOrUrl
- * @returns {string} code
- * @throws {Error} when the URL doesn't contain a code
- */
-export function extractCode(codeOrUrl) {
-  if (!codeOrUrl) throw new Error('No code or URL provided.');
-  const input = String(codeOrUrl).trim();
-  if (!input.startsWith('https://')) {
-    return input;
-  }
-  const urlObj = new URL(input);
-  const code = urlObj.searchParams.get('code');
-  if (!code) throw new Error('The URL does not contain a valid code.');
-  return code;
+const AUTH_URL = 'https://auth.gog.com/auth';
+const AUTH__CLIENT_ID = '46899977096215655';
+const AUTH__REDIRECT_URI = 'https://embed.gog.com/on_login_success?origin=client';
+const AUTH__RESPONSE_TYPE = 'code';
+const AUTH__LAYOUT = 'client2';
+
+const TOKEN__URL = 'https://auth.gog.com/token';
+const TOKEN__CLIENT_SECRET = '9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9';
+const TOKEN__GRANT_TYPE__NEW_LOGIN = 'authorization_code';
+const TOKEN__GRANT_TYPE__REFRESH = 'refresh_token';
+
+export async function loginFlow(loginCodeUrl = undefined) {
+    const askForLoginCodeUrl = async () => {
+        return await new Promise((resolve) => {
+            const url = getAuthUrl();
+            process.stdout.write(`\nTo connect your GOG account, please follow these steps:\n\n`);
+            process.stdout.write(`1. Open this link in your browser: ${url}\n`);
+            process.stdout.write('2. Log in to your account.\n');
+            process.stdout.write('3. After logging in, you will see a blank page. Copy the URL from the address bar.\n');
+            process.stdout.write('4. Paste that URL here.\n\n');
+            process.stdout.write('URL: ');
+            process.stdin.setEncoding('utf8');
+            process.stdin.resume();
+            const onData = (chunk) => {
+                process.stdin.pause();
+                process.stdin.removeListener('data', onData);
+                resolve(String(chunk).trim());
+            };
+            process.stdin.on('data', onData);
+        });
+    };
+
+    const url = loginCodeUrl || await askForLoginCodeUrl();
+
+    const loginCode = extractLoginCode(url);
+    const loginCodeFile = await storeLoginCode(loginCode);
+    process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFile + '\n');
+
+    const token = await exchangeCodeForToken(loginCode);
+    const tokenFile = await storeToken(token);
+    process.stdout.write('Logged in successfully. Token stored at: ' + tokenFile + '\n');
+
+    return {code: loginCode, tokenPath: tokenFile};
 }
 
-function defaultTokenPath() {
-  // Prefer XDG config home on Unix, fallback to ~/.config
-  const isWin = process.platform === 'win32';
-  if (isWin) {
-    const base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-    return path.join(base, 'gog-receipts', 'token.json');
-  }
-  const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-  return path.join(base, 'gog-receipts', 'token.json');
+function getAuthUrl() {
+    const url = new URL(AUTH_URL);
+    url.searchParams.set('client_id', AUTH__CLIENT_ID);
+    url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
+    url.searchParams.set('response_type', AUTH__RESPONSE_TYPE);
+    url.searchParams.set('layout', AUTH__LAYOUT);
+    return url;
 }
 
-/**
- * Exchanges an authorization code for an access token using GOG OAuth endpoint.
- * @param {string} code
- * @returns {Promise<{access_token:string,token_type:string,expires_in:number,refresh_token?:string,scope?:string}>>}
- */
-async function exchangeCodeForToken(code) {
-  const body = new URLSearchParams();
-  body.set('grant_type', 'authorization_code');
-  body.set('code', code);
-  body.set('client_id', CLIENT_ID);
-  body.set('redirect_uri', REDIRECT_URI);
-
-  const res = await fetch(TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: body.toString(),
-  });
-  const txt = await res.text();
-  let json;
-  try { json = JSON.parse(txt); } catch {
-    throw new Error(`Token endpoint returned non-JSON response (${res.status}): ${txt.slice(0, 200)}`);
-  }
-  if (!res.ok) {
-    const errMsg = json.error_description || json.error || `HTTP ${res.status}`;
-    throw new Error(`Failed to exchange code for token: ${errMsg}`);
-  }
-  if (!json.access_token) {
-    throw new Error('Token response missing access_token');
-  }
-  return json;
+function getTokenUrl(loginCode) {
+    const url = new URL(TOKEN__URL);
+    url.searchParams.set('client_id', AUTH__CLIENT_ID);
+    url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
+    url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__NEW_LOGIN);
+    url.searchParams.set('code', loginCode);
+    url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
+    return url;
 }
 
-/**
- * Exchanges the given code for tokens and persists them to disk as JSON.
- * @param {object} params
- * @param {string} params.code - The authorization code to exchange and store.
- * @param {string} [params.tokenPath] - File path to store the token.json
- * @returns {Promise<string>} token file path used
- */
-export async function storeToken({ code, tokenPath } = {}) {
-  if (!code) throw new Error('Missing code to store.');
-  const file = tokenPath || defaultTokenPath();
-  const dir = path.dirname(file);
-  fs.mkdirSync(dir, { recursive: true });
-
-  const token = await exchangeCodeForToken(code);
-  const now = Date.now();
-  const expiresIn = typeof token.expires_in === 'number' ? token.expires_in : undefined;
-  const expiresAt = expiresIn ? new Date(now + expiresIn * 1000).toISOString() : undefined;
-
-  const payload = {
-    // Keep the original code for troubleshooting/backwards compatibility
-    code,
-    access_token: token.access_token,
-    token_type: token.token_type,
-    refresh_token: token.refresh_token,
-    scope: token.scope,
-    expires_in: token.expires_in,
-    expires_at: expiresAt,
-    savedAt: new Date(now).toISOString(),
-  };
-  fs.writeFileSync(file, JSON.stringify(payload, null, 2), 'utf8');
-  return file;
+function defaultConfigPath(filename) {
+    if (!filename) throw new Error('No filename provided.');
+    // Prefer XDG config home on Unix, fallback to ~/.config
+    const isWin = process.platform === 'win32';
+    if (isWin) {
+        const base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+        return path.join(base, 'gog-receipts', filename);
+    }
+    const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
+    return path.join(base, 'gog-receipts', filename);
 }
 
-/**
- * Reads the stored token.json (containing the last saved authorization code).
- * @param {object} [params]
- * @param {string} [params.tokenPath] - Optional explicit token file path.
- * @returns {{code:string,savedAt:string}|null} The stored payload or null if not found/invalid.
- */
-export function getStoredToken({ tokenPath } = {}) {
-  try {
-    const file = tokenPath || defaultTokenPath();
-    if (!fs.existsSync(file)) return null;
-    const raw = fs.readFileSync(file, 'utf8');
-    const data = JSON.parse(raw);
-    if (!data || typeof data.code !== 'string' || !data.code) return null;
-    return data;
-  } catch {
-    return null;
-  }
+export function extractLoginCode(codeOrUrl) {
+    if (!codeOrUrl) throw new Error('No URL provided.');
+
+    const urlObj = new URL(codeOrUrl);
+    const code = urlObj.searchParams.get('code');
+
+    if (!code) throw new Error('The URL does not contain a valid code.');
+
+    return code;
 }
 
-/**
- * Interactive login flow: guides the user to the GOG login page and asks for code/URL.
- * @param {object} params
- * @param {string|undefined} params.input - Optional pre-supplied code or URL.
- * @param {string|undefined} params.tokenPath - Optional custom token path.
- * @param {NodeJS.ReadStream} [params.stdin] - Custom stdin for prompting.
- * @param {NodeJS.WriteStream} [params.stdout] - Custom stdout for messages.
- * @returns {Promise<{code:string, tokenPath:string}>>}
- */
-export async function loginFlow({ input, tokenPath, stdin = process.stdin, stdout = process.stdout } = {}) {
-  const ask = async () => {
-    return await new Promise((resolve) => {
-      stdout.write(`\nVisit ${AUTH_URL}\n`);
-      stdout.write('After you are redirected to a blank page, copy the address and paste it here, or paste the code:\n');
-      stdout.write('Code or web address: ');
-      stdin.setEncoding('utf8');
-      stdin.resume();
-      const onData = (chunk) => {
-        stdin.pause();
-        stdin.removeListener('data', onData);
-        resolve(String(chunk).trim());
-      };
-      stdin.on('data', onData);
+export async function storeLoginCode(loginCode) {
+    if (!loginCode) throw new Error('Missing code to store.');
+    const file = defaultConfigPath(LOGIN_CODE_FILE_NAME);
+    const dir = path.dirname(file);
+    fs.mkdirSync(dir, {recursive: true});
+
+    const payload = {
+        createdAt: new Date().toISOString(),
+        loginCode,
+    };
+    fs.writeFileSync(file, JSON.stringify(payload, null, 2), 'utf8');
+    return file;
+}
+
+export function getStoredToken({tokenPath} = {}) {
+    try {
+        const file = tokenPath || defaultConfigPath(LOGIN_CODE_FILE_NAME);
+        if (!fs.existsSync(file)) return null;
+        const raw = fs.readFileSync(file, 'utf8');
+        const data = JSON.parse(raw);
+        if (!data || typeof data.code !== 'string' || !data.code) return null;
+        return data;
+    } catch {
+        return null;
+    }
+}
+
+async function exchangeCodeForToken(loginCode) {
+    const res = await fetch(getTokenUrl(loginCode).toString(), {
+        method: 'GET',
     });
-  };
 
-  const provided = input || await ask();
-  const code = extractCode(provided);
-  const file = await storeToken({ code, tokenPath });
-  stdout.write('Logged in successfully. Token stored at: ' + file + '\n');
-  return { code, tokenPath: file };
+    const txt = await res.text();
+
+    if (!res.ok) {
+        throw new Error(`Token fetch failed. Status: ${res.status}. Response: ${txt}`);
+    }
+
+    return JSON.parse(txt);
+}
+
+async function storeToken(token) {
+    if (!token) throw new Error('Missing code to store.');
+    const file = defaultConfigPath(TOKEN_FILE_NAME);
+    const dir = path.dirname(file);
+    fs.mkdirSync(dir, {recursive: true});
+
+    fs.writeFileSync(file, JSON.stringify(token, null, 2), 'utf8');
+    return file;
 }
 
 export default {
-  AUTH_URL,
-  extractCode,
-  storeToken,
-  getStoredToken,
-  loginFlow,
+    extractCode: extractLoginCode, storeToken: storeLoginCode, getStoredToken, loginFlow,
 };
-
