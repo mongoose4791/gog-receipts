@@ -14,6 +14,8 @@ A simple command-line tool for automatically downloading and storing your
 official GOG purchase receipts, providing easy access for tax, documentation,
 and long-term preservation.
 
+Note on OS support: This project targets Linux only. We adhere strictly to Linux XDG conventions for configuration and do not support Windows or macOS paths/environments.
+
 ## Authentication and login (gog-login)
 
 This project provides a small authentication module used by the CLI:
@@ -24,7 +26,7 @@ This project provides a small authentication module used by the CLI:
   - Otherwise accepts a URL/code passed by the user.
   - Otherwise prompts interactively, printing a GOG login URL to open.
 - Persistence: the following files are written under your config directory
-  (XDG_CONFIG_HOME on Linux/macOS, APPDATA on Windows), inside gog-receipts/:
+  (Linux XDG: XDG_CONFIG_HOME or ~/.config), inside gog-receipts/:
   - loginCode.json: stores { loginCode, createdAt }
   - token.json: stores the token payload returned by GOG
 
@@ -37,6 +39,7 @@ You can paste either the full redirect URL you get after signing in at GOG or th
 Note: Tests stub network calls and isolate config directories. Do not commit real tokens.
 
 ## Compatibility
+- Operating system: Linux only. Windows and macOS are not supported; contributions that add complexity solely for non-Linux platforms will not be accepted.
 - Runtime: Node.js 20+ only. While Node 18+ may happen to work during development, the project targets Node 20 for CI and local development.
 - Irrelevance of legacy compatibility: Supporting older Node versions or legacy environments is out of scope. We avoid shims/polyfills and prefer modern, standard APIs (ESM modules, global fetch, node:test). Requests to add complexity solely to support older versions will not be accepted.
 

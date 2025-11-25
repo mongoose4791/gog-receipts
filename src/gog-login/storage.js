@@ -6,20 +6,16 @@ const LOGIN_CODE_FILE_NAME = 'loginCode.json';
 const TOKEN_FILE_NAME = 'token.json';
 
 /**
- * Resolve the app config path for a given filename, following platform conventions.
- * - macOS/Linux: $XDG_CONFIG_HOME or ~/.config
- * - Windows: %APPDATA%
+ * Resolve the app config path for a given filename using Linux XDG conventions only.
+ * - XDG_CONFIG_HOME if set; otherwise ~/.config
+ *
+ * Note: This project intentionally targets Linux-only filesystem conventions.
  *
  * @param {string} filename File name to place under the app's config directory.
  * @returns {string} Absolute path to the config file.
  */
 function defaultConfigPath(filename) {
   if (!filename) throw new Error('No filename provided.');
-  const isWin = process.platform === 'win32';
-  if (isWin) {
-    const base = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-    return path.join(base, 'gog-receipts', filename);
-  }
   const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
   return path.join(base, 'gog-receipts', filename);
 }

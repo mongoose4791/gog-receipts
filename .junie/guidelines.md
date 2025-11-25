@@ -14,9 +14,8 @@ Runtime, build, and configuration
   - puppeteer is required for browser automation in receipt downloads. Tests should avoid launching a browser; use stubs/mocks instead.
 
 Configuration and environment
-- Config directory resolution follows typical desktop conventions:
-  - On Linux/macOS, XDG_CONFIG_HOME is respected if set; otherwise defaults to ~/.config.
-  - On Windows, APPDATA is respected.
+- Config directory resolution follows Linux XDG conventions only:
+  - XDG_CONFIG_HOME is respected if set; otherwise defaults to ~/.config.
   - Files are written under the vendor app dir e.g. <config-root>/gog-receipts/.
 - Auth artifacts:
   - loginCode.json stores a recent one-time login code and metadata.
@@ -38,7 +37,7 @@ Testing
 - ESM considerations: Use import from 'node:test' and 'node:assert/strict'. Do not use require().
 - Isolation from user config: For any test that touches the on-disk config, set up a temporary config home so tests do not read/write the real user profile. Example pattern from src/gog-login/gog-login.test.js:
   - Create a temp directory with fs.mkdtempSync.
-  - Override process.env.XDG_CONFIG_HOME and process.env.APPDATA for the duration of the test.
+  - Override process.env.XDG_CONFIG_HOME for the duration of the test.
   - Cleanup the directory after the test using fs.rmSync(..., { recursive: true, force: true }).
 - No real network: Stub globalThis.fetch in tests to return deterministic responses. Example used in loginFlow tests returns a 200 with a JSON payload for token exchange.
 - Puppeteer: Do not launch Chromium in unit tests. The receipt download flow should be structured to make side effects injectable/mocked. Where unavoidable, gate code paths behind feature flags and do not execute those in unit tests.
@@ -94,3 +93,7 @@ Compatibility policy
 - Backward compatibility: Old versions of this project will not be supported.
 - Tests covering backwards compatibility: No.
 - Changing tests to reflect new behavior: Yes, as long as the change is intentional.
+
+Documentation policy
+- Keep README.md up to date. When behavior, CLI options, configuration paths, supported platforms, or workflows change, update README.md in the same PR whenever possible. Minor internal refactors that do not alter user-facing behavior may skip README updates, but prefer updating examples and notes if they clarify usage. 
+- PRs may be blocked during review if README is not updated to reflect user-visible changes.

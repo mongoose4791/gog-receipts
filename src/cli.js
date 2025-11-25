@@ -23,7 +23,7 @@ Login flow:
   2. Open the printed GOG login URL in your browser and sign in.
   3. Copy the final redirect URL from your browser's address bar.
   4. Paste it back into the CLI when prompted, or pass it as an argument to 'login'.
-  The tool will store two files under your config directory (XDG_CONFIG_HOME/APPDATA):
+  The tool will store two files under your config directory (Linux XDG: XDG_CONFIG_HOME or ~/.config):
     - loginCode.json: last one-time login code and timestamp
     - token.json: token payload used to access your account
 

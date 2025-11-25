@@ -15,16 +15,13 @@ import {
 async function withTempConfigHome(fn) {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'gog-receipts-test-'));
   const prevXdg = process.env.XDG_CONFIG_HOME;
-  const prevAppData = process.env.APPDATA;
-  // Prefer XDG_CONFIG_HOME on non-Windows; set APPDATA too to be safe on Windows runners
+  // Use XDG_CONFIG_HOME only; project targets Linux-style config directories
   process.env.XDG_CONFIG_HOME = tmpRoot;
-  process.env.APPDATA = tmpRoot;
   try {
     return await fn(tmpRoot);
   } finally {
     // Restore and cleanup
     if (prevXdg === undefined) delete process.env.XDG_CONFIG_HOME; else process.env.XDG_CONFIG_HOME = prevXdg;
-    if (prevAppData === undefined) delete process.env.APPDATA; else process.env.APPDATA = prevAppData;
     try {
       fs.rmSync(tmpRoot, { recursive: true, force: true });
     } catch {}
