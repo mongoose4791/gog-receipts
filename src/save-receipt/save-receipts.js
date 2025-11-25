@@ -1,8 +1,7 @@
 import puppeteer from 'puppeteer';
 import fs from 'node:fs';
 import path from 'node:path';
-import {getStoredToken} from '../gog-login/gog-login.js';
-import { waitForPageSettled, collectPreviewLinks, extractPurchaseDate } from './page-utils.js';
+import { waitForPageSettled, collectPreviewLinksAllPages, extractPurchaseDate } from './page-utils.js';
 import { makeReceiptFilename } from './filename.js';
 const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
 
@@ -26,8 +25,14 @@ const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
  * @param {('load'|'domcontentloaded'|'networkidle0'|'networkidle2')} [options.waitUntil='networkidle0'] Navigation waitUntil event.
  * @param {number} [options.timeout=60000] Navigation timeout in ms.
  * @param {boolean} [options.headless=true] Puppeteer headless mode.
- * @param {boolean} [options.useToken=true] Whether to attach the stored login token to requests.
- * @param {(evt: {type: 'navigating', url: string} | {type: 'found', count: number} | {type: 'processing', index: number, total: number, url: string} | {type: 'saved', index: number, total: number, url: string, path: string} | {type: 'done', saved: number})} [options.onProgress] Optional progress callback for live stdout updates from the caller.
+ * @param {boolean} [options.useToken=true] Whether to attach the provided token to requests.
+ * @param {string|{access_token:string}} [options.token] An access token string or token payload returned by loginFlow.
+ * @param {(evt: {type: 'navigating', url: string}
+ *   | {type: 'page', current: number, total: number}
+ *   | {type: 'found', count: number}
+ *   | {type: 'processing', index: number, total: number, url: string}
+ *   | {type: 'saved', index: number, total: number, url: string, path: string}
+ *   | {type: 'done', saved: number})} [options.onProgress] Optional progress callback for live stdout updates from the caller.
  * @returns {Promise<string[]>} The list of saved PDF paths.
  */
 export async function saveReceipts({
@@ -38,6 +43,7 @@ export async function saveReceipts({
    timeout = 60000,
    headless = true,
    useToken = true,
+   token,
    onProgress,
 } = {}) {
 
@@ -53,10 +59,9 @@ export async function saveReceipts({
         const page = await browser.newPage();
         await page.setViewport(viewport);
 
-        // If requested, try to attach the stored token so authenticated pages can be accessed.
+        // If requested, attach the provided token so authenticated pages can be accessed.
         if (useToken) {
-            const stored = getStoredToken();
-            const bearer = stored?.access_token;
+            const bearer = typeof token === 'string' ? token : token?.access_token;
             if (bearer) {
                 await page.setExtraHTTPHeaders({'Authorization': `Bearer ${bearer}`});
             }
@@ -68,8 +73,13 @@ export async function saveReceipts({
         // Wait until the page is fully settled before scraping/generating output.
         await waitForPageSettled(page, timeout);
 
-        // Collect preview links by pattern.
-        const absoluteUrls = await collectPreviewLinks(page);
+        // Collect preview links by pattern across all paginated Orders pages if present.
+        const absoluteUrls = await collectPreviewLinksAllPages(
+            page,
+            waitUntil,
+            timeout,
+            (info) => onProgress?.(info)
+        );
         onProgress?.({ type: 'found', count: absoluteUrls.length });
 
         // Ensure output directory exists.

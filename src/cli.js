@@ -138,6 +138,9 @@ async function run() {
         process.exit(0);
     }
 
+    // Login flow
+    const token = await loginFlow(args.subArg);
+
     // Generate PDFs for all discovered receipt preview pages.
     const saved = await saveReceipts({
         receiptsDir: args.receiptsDir,
@@ -146,6 +149,7 @@ async function run() {
         waitUntil: args.waitUntil,
         timeout: args.timeout,
         headless: args.headless,
+        token,
         onProgress: (evt) => {
             // Live updates to stdout without coupling tests to logs
             try {
