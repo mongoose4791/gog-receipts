@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { saveReceipt } from './save-receipt.js';
+import { saveReceipt } from './save-receipt/save-receipt.js';
 import { loginFlow } from './gog-login/gog-login.js';
 
 /**

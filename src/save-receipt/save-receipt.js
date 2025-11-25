@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import { getStoredToken } from './gog-login/gog-login.js';
+import { getStoredToken } from '../gog-login/gog-login.js';
 
 /**
  * Saves the given URL as a PDF using Puppeteer.
