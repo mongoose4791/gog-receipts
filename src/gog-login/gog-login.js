@@ -19,6 +19,57 @@ const TOKEN__GRANT_TYPE__NEW_LOGIN = 'authorization_code';
 const TOKEN__GRANT_TYPE__REFRESH = 'refresh_token';
 
 export async function loginFlow(loginCodeUrl = undefined) {
+    process.stdout.write('Authenticating with GOG...\n');
+
+    // 1) Try existing token and refresh if possible
+    try {
+        const existing = getStoredToken();
+        if (existing) {
+            // If we have a refresh token, try to refresh first
+            if (existing.refresh_token) {
+                try {
+                    const refreshed = await refreshAccessToken(existing.refresh_token);
+                    const tokenFilePath = await storeToken(refreshed);
+                    process.stdout.write('Existing GOG token refreshed successfully. Stored at: ' + tokenFilePath + '\n');
+                    return refreshed;
+                } catch (e) {
+                    // If refresh fails, proceed to next steps without using the old token
+                    process.stdout.write('Token refresh failed. Proceeding to login code flow. Reason: ' + (e?.message || e) + '\n');
+                }
+            }
+            // Legacy shape: token file may only contain a code. We'll try to exchange below.
+        }
+    } catch {
+    }
+
+    // 2) If we have a stored login code already, try exchanging it before prompting
+    if (!loginCodeUrl) {
+        const stored = getStoredLoginCode();
+        if (stored?.loginCode) {
+            try {
+                const token = await exchangeLoginCodeForToken(stored.loginCode);
+                const tokenFilePath = await storeToken(token);
+                process.stdout.write('Stored GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
+                return token;
+            } catch (e) {
+                process.stdout.write('Exchanging stored login code failed, will prompt for a new one. Reason: ' + (e?.message || e) + '\n');
+            }
+        }
+    }
+
+    // 3) If caller provided a login URL/code, use it
+    if (loginCodeUrl) {
+        const loginCode = extractLoginCode(loginCodeUrl);
+        const loginCodeFilePath = await storeLoginCode(loginCode);
+        process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFilePath + '\n');
+
+        const token = await exchangeLoginCodeForToken(loginCode);
+        const tokenFilePath = await storeToken(token);
+        process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
+        return token;
+    }
+
+    // 4) Prompt for login code/URL interactively
     const askForLoginCodeUrl = async () => {
         return await new Promise((resolve) => {
             const url = getAuthUrl();
@@ -39,7 +90,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
         });
     };
 
-    const url = loginCodeUrl || await askForLoginCodeUrl();
+    const url = await askForLoginCodeUrl();
 
     const loginCode = extractLoginCode(url);
     const loginCodeFile = await storeLoginCode(loginCode);
@@ -49,7 +100,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
     const tokenFile = await storeToken(token);
     process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFile + '\n');
 
-    return {code: loginCode, tokenPath: tokenFile};
+    return token;
 }
 
 function getAuthUrl() {
@@ -68,6 +119,15 @@ function getNewTokenUrl(loginCode) {
     url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__NEW_LOGIN);
     url.searchParams.set('code', loginCode);
     url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
+    return url;
+}
+
+function getRefreshTokenUrl(refreshToken) {
+    const url = new URL(TOKEN__URL);
+    url.searchParams.set('client_id', AUTH__CLIENT_ID);
+    url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
+    url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__REFRESH);
+    url.searchParams.set('refresh_token', refreshToken);
     return url;
 }
 
@@ -121,6 +181,19 @@ export async function storeLoginCode(loginCode) {
     return file;
 }
 
+export function getStoredLoginCode() {
+    try {
+        const file = defaultConfigPath(LOGIN_CODE_FILE_NAME);
+        if (!fs.existsSync(file)) return null;
+        const raw = fs.readFileSync(file, 'utf8');
+        const data = JSON.parse(raw);
+        if (typeof data?.loginCode === 'string' && data.loginCode.length > 0) return data;
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 export function getStoredToken() {
     try {
         const file = defaultConfigPath(TOKEN_FILE_NAME);
@@ -147,6 +220,20 @@ async function exchangeLoginCodeForToken(loginCode) {
 
     if (!res.ok) {
         throw new Error(`Token fetch failed. Status: ${res.status}. Response: ${txt}`);
+    }
+
+    return JSON.parse(txt);
+}
+
+async function refreshAccessToken(refreshToken) {
+    const res = await fetch(getRefreshTokenUrl(refreshToken).toString(), {
+        method: 'GET',
+    });
+
+    const txt = await res.text();
+
+    if (!res.ok) {
+        throw new Error(`Token refresh failed. Status: ${res.status}. Response: ${txt}`);
     }
 
     return JSON.parse(txt);
