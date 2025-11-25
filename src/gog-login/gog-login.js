@@ -29,7 +29,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
     process.stdout.write('Try existing token and refresh if possible...\n');
     const refreshed = await tryRefreshWithStoredToken();
     if (refreshed) {
-        process.stdout.write('Welcome back! Session restored.\n');
+        process.stdout.write('Welcome back!\n');
         return refreshed;
     }
 

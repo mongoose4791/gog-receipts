@@ -70,5 +70,4 @@ Follow these steps to get the project running locally.
 ## TODOs
 
 - Add keytar (or a similar package like node-keytar) to store the sensitive token securely instead of writing it to a file.
-- Finish authentication module.
-- Download receipts.
+- ensure all pages or receipts are downloaded

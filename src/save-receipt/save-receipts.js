@@ -64,6 +64,11 @@ async function collectPreviewLinks(page) {
  * Note: The destination URL for discovery is fixed to the Orders page; this function
  * navigates there to discover all preview links and then renders each preview page to PDF.
  *
+ * Filenames: Each PDF filename prefers the purchase date found on the receipt page
+ * (span containing the text "Date of purchase" with a nested <b> date). The date is
+ * sanitized for filesystem safety and combined with the preview token for uniqueness,
+ * e.g., "2024-11-05-Order-1234-abcdef.pdf". If no date is found, the token alone is used.
+ *
  * @param {Object} [options] Options for rendering and navigation.
  * @param {string} [options.receiptsDir="receipts"] Output directory where PDFs will be stored. Created if missing.
  * @param {boolean} [options.printBackground=true] Include CSS backgrounds.
@@ -124,9 +129,29 @@ export async function saveReceipts({
             await page.goto(url, {waitUntil, timeout});
             await waitForPageSettled(page, timeout);
 
-            // Derive a stable filename from the URL's last segment
+            // Extract the purchase date text from the preview page DOM.
+            // On each page there is a span with the content "Date of purchase" and inside it a <b> element containing the date.
+            /** @type {string|null} */
+            const purchaseDate = await page.evaluate(() => {
+                const spans = Array.from(document.querySelectorAll('span'));
+                for (const s of spans) {
+                    const text = (s.textContent || '').toLowerCase();
+                    if (text.includes('date of purchase')) {
+                        const b = s.querySelector('b');
+                        const dateText = b?.textContent?.trim();
+                        if (dateText) return dateText;
+                    }
+                }
+                return null;
+            });
+
+            // Sanitize the date string for safe filenames and combine with token for uniqueness.
             const token = url.split('/').filter(Boolean).pop() || 'receipt';
-            const filePath = path.join(receiptsDir, `${token}.pdf`);
+            const safeDate = purchaseDate
+                ? purchaseDate.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-+/g, '-')
+                : '';
+            const baseName = safeDate ? `${safeDate} Order ${token}` : token;
+            const filePath = path.join(receiptsDir, `${baseName}.pdf`);
             await page.pdf({path: filePath, format: 'A4', printBackground});
             saved.push(filePath);
         }
