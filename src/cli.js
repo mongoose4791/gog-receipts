@@ -39,7 +39,7 @@ Options:
   --headful           Run browser with UI (default: headless)
   --help, -h          Show this help
 `;
-    console.log(help);
+    process.stdout.write(help);
 }
 
 /**
@@ -148,8 +148,30 @@ async function run() {
         waitUntil: args.waitUntil,
         timeout: args.timeout,
         headless: args.headless,
+        onProgress: (evt) => {
+            // Live updates to stdout without coupling tests to logs
+            try {
+                switch (evt?.type) {
+                    case 'navigating':
+                        process.stdout.write(`Navigating: ${evt.url}\n`);
+                        break;
+                    case 'found':
+                        process.stdout.write(`Found ${evt.count} receipt preview link(s)\n`);
+                        break;
+                    case 'processing':
+                        process.stdout.write(`Processing [${evt.index + 1}/${evt.total}]: ${evt.url}\n`);
+                        break;
+                    case 'saved':
+                        process.stdout.write(`Saved [${evt.index + 1}/${evt.total}]: ${evt.path}\n`);
+                        break;
+                    case 'done':
+                        process.stdout.write(`Done. Saved ${evt.saved} file(s).\n`);
+                        break;
+                }
+            } catch {}
+        }
     });
-    console.log(`Saved ${saved.length} receipt PDF(s) to ${args.receiptsDir}`);
+    process.stdout.write(`Saved ${saved.length} receipt PDF(s) to ${args.receiptsDir}\n`);
 }
 
 run().catch(err => {
