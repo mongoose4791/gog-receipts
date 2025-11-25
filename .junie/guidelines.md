@@ -75,5 +75,5 @@ Compatibility policy
 - Changing tests to reflect new behavior: Yes, as long as the change is intentional.
 
 Documentation policy
-- Keep README.md up to date. When behavior, CLI options, configuration paths, supported platforms, or workflows change, update README.md in the same PR whenever possible. Minor internal refactors that do not alter user-facing behavior may skip README updates, but prefer updating examples and notes if they clarify usage. 
-- PRs may be blocked during review if README is not updated to reflect user-visible changes.
+- If README.md is changed, ensure it is properly formatted: use valid Markdown structure; headings, lists, links, and code blocks must render correctly. Run any Markdown linting/formatting tools used by the project before committing.
+- Only update README.md on demand. Avoid incidental, cosmetic, or drive-by edits in PRs that do not otherwise require documentation changes.

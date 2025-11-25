@@ -1,4 +1,5 @@
 # gog-receipts
+
 ![Status](https://img.shields.io/badge/status-in_development-orange)
 
 Important: This project is currently in active development and is not ready for use yet. Interfaces, behavior, and documentation may change without notice. Please do not rely on it for production or personal workflows at this time.
@@ -16,34 +17,58 @@ and long-term preservation.
 
 Note on OS support: This project targets Linux only. We adhere strictly to Linux XDG conventions for configuration and do not support Windows or macOS paths/environments.
 
-## Authentication and login (gog-login)
-
-This project provides a small authentication module used by the CLI:
-
-- High-level flow: loginFlow(codeOrUrl?)
-  - Reuses an existing token if present (refreshes when possible).
-  - Otherwise tries a stored one-time login code.
-  - Otherwise accepts a URL/code passed by the user.
-  - Otherwise prompts interactively, printing a GOG login URL to open.
-- Persistence: the following files are written under your config directory
-  (Linux XDG: XDG_CONFIG_HOME or ~/.config), inside gog-receipts/:
-  - loginCode.json: stores { loginCode, createdAt }
-  - token.json: stores the token payload returned by GOG
-
-CLI usage for login:
-
-  gog-receipts login [code|url]
-
-You can paste either the full redirect URL you get after signing in at GOG or the code parameter value itself.
-
-Note: Tests stub network calls and isolate config directories. Do not commit real tokens.
-
 ## Compatibility
+
 - Operating system: Linux only. Windows and macOS are not supported; contributions that add complexity solely for non-Linux platforms will not be accepted.
 - Runtime: Node.js 20+ only. While Node 18+ may happen to work during development, the project targets Node 20 for CI and local development.
 - Irrelevance of legacy compatibility: Supporting older Node versions or legacy environments is out of scope. We avoid shims/polyfills and prefer modern, standard APIs (ESM modules, global fetch, node:test). Requests to add complexity solely to support older versions will not be accepted.
 
+## Setup
+
+Follow these steps to get the project running locally.
+
+1. Prerequisites
+   - Linux environment
+   - Node.js 20+ (recommended for parity with CI)
+
+2. Install dependencies
+
+   Use npm ci for a clean, reproducible install:
+
+   ```sh
+   npm ci
+   ```
+
+3. Install the browser used by Puppeteer
+
+   This project uses Puppeteer for automating receipt downloads. Install the managed Chrome binary once using the provided script:
+
+   ```sh
+   npm run browser:install
+   ```
+
+4. Run the CLI locally
+
+   Start the CLI:
+
+   ```sh
+   npm run cli
+   ```
+
+   Run the login flow only (included in `npm run cli`):
+
+   ```sh
+   npm run login
+   ```
+
+5. Run tests
+
+   ```sh
+   npm test
+   ```
+
 ## TODOs
-- add keytar (or a similar package like node-keytar) to store the sensitive token securely instead of writing it to a file.
-- finish authentication module
-- download receipts
+
+- Add keytar (or a similar package like node-keytar) to store the sensitive token securely instead of writing it to a file.
+- Finish authentication module.
+- Download receipts.

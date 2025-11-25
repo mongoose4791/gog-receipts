@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { saveReceipt } from './save-receipt/save-receipt.js';
+import { saveReceipts } from './save-receipt/save-receipts.js';
 
-test('saveReceipt throws when url is missing', async () => {
-  await assert.rejects(() => saveReceipt({}), /Missing required option: url/);
+// The CLI and library no longer accept a "url" or "format" argument.
+// Avoid launching Puppeteer in unit tests; just verify the function is defined.
+test('saveReceipts function is exported', () => {
+  assert.equal(typeof saveReceipts, 'function');
 });

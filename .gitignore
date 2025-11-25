@@ -1,13 +1,5 @@
 # Node dependencies
 node_modules/
 
-# Logs
-logs
-*.log
-npm-debug.log*
-
-# Generated artifacts from this project
-page.pdf
-
 # Editor/IDE
 .idea

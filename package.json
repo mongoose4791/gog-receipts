@@ -27,7 +27,9 @@
   "scripts": {
     "test": "node --test",
     "cli": "node ./src/cli.js",
-    "login": "node ./src/cli.js login"
+    "start": "node ./src/cli.js",
+    "login": "node ./src/cli.js login",
+    "browser:install": "npx puppeteer browsers install chrome"
   },
   "dependencies": {
     "puppeteer": "^24.31.0"
