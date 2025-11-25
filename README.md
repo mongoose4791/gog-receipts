@@ -16,3 +16,5 @@ and long-term preservation.
 
 ## TODOs
 - add keytar (or a similar package like node-keytar) to store the sensitive token securely instead of writing it to a file.
+- finish authentication module
+- download receipts
