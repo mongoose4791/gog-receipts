@@ -41,27 +41,7 @@ Testing
   - Cleanup the directory after the test using fs.rmSync(..., { recursive: true, force: true }).
 - No real network: Stub globalThis.fetch in tests to return deterministic responses. Example used in loginFlow tests returns a 200 with a JSON payload for token exchange.
 - Puppeteer: Do not launch Chromium in unit tests. The receipt download flow should be structured to make side effects injectable/mocked. Where unavoidable, gate code paths behind feature flags and do not execute those in unit tests.
-
-How to add and run a new test (demonstration)
-- Create a file ending with .test.js next to the module you’re testing or under a test directory. Example minimal test:
-  - File: src/example.sanity.test.js
-    import test from 'node:test';
-    import assert from 'node:assert/strict';
-    test('basic arithmetic works', () => {
-      assert.equal(1 + 1, 2);
-    });
-- Run tests: npm test
-- Remove demonstration tests before committing unless they validate real behavior. This repository keeps unit tests focused on concrete modules (see src/gog-login/gog-login.test.js). During this documentation update, we temporarily created and ran a simple test to validate the flow, then removed it to keep the repo minimal.
-
-Project-specific testing techniques captured from current tests
-- Parsing and validation
-  - extractLoginCode accepts either a raw code string or a GOG callback URL and extracts the "code" query parameter. Tests assert success for valid inputs and throws for URL without code.
-- Persistence
-  - storeLoginCode writes { loginCode, createdAt } to loginCode.json under the resolved config directory. Tests verify correct persistence using a temp config home; no writes to the developer machine occur.
-- Token handling
-  - getStoredToken reads token.json and supports both modern access_token/refresh_token and a legacy code-based shape; tests validate null when the file is missing and correct readback after a simulated login flow.
-- Login flow without I/O coupling
-  - loginFlow accepts a URL/code parameter, writes the loginCode file, exchanges it for a token by calling fetch, persists token.json, and returns the parsed token object. Tests stub fetch to avoid external calls and assert both return value and persisted file contents.
+ - Stdout/stderr: Do not assert on stdout or stderr in unit tests. Validate behavior via return values, state changes, or persisted artifacts instead. Logging is non-contractual and may change; tests should not fail due to log output wording or presence.
 
 Code style and structure
 - ESM with top-level imports only; avoid dynamic require.
