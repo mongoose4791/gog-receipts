@@ -148,7 +148,7 @@ export function extractLoginCode(codeOrUrl) {
 
     const input = String(codeOrUrl).trim();
     // Try to parse as URL first. Only treat it as non-URL if URL parsing throws.
-    let urlObj = null;
+    let urlObj;
     try {
         urlObj = new URL(input);
     } catch {

@@ -13,7 +13,6 @@ import { getStoredToken } from './gog-login/gog-login.js';
  * @param {number} [options.timeout=60000] - Navigation timeout in ms.
  * @param {boolean|"new"} [options.headless='new'] - Puppeteer headless mode.
  * @param {boolean} [options.useToken=true] - Whether to attach the stored login token to requests.
- * @param {string} [options.tokenPath] - Optional path to token.json.
  * @returns {Promise<string>} The output PDF path.
  */
 export async function saveReceipt({
