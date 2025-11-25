@@ -22,76 +22,82 @@ export async function loginFlow(loginCodeUrl = undefined) {
     process.stdout.write('Authenticating with GOG...\n');
 
     // 1) Try existing token and refresh if possible
-    try {
-        const existing = getStoredToken();
-        if (existing) {
-            // If we have a refresh token, try to refresh first
-            if (existing.refresh_token) {
-                try {
-                    const refreshed = await refreshAccessToken(existing.refresh_token);
-                    const tokenFilePath = await storeToken(refreshed);
-                    process.stdout.write('Existing GOG token refreshed successfully. Stored at: ' + tokenFilePath + '\n');
-                    return refreshed;
-                } catch (e) {
-                    // If refresh fails, proceed to next steps without using the old token
-                    process.stdout.write('Token refresh failed. Proceeding to login code flow. Reason: ' + (e?.message || e) + '\n');
-                }
-            }
-            // Legacy shape: token file may only contain a code. We'll try to exchange below.
-        }
-    } catch {
+    const refreshed = await tryRefreshWithStoredToken();
+    if (refreshed) {
+        process.stdout.write('Authentication handled by: refreshed existing token.\n');
+        return refreshed;
     }
 
     // 2) If we have a stored login code already, try exchanging it before prompting
     if (!loginCodeUrl) {
-        const stored = getStoredLoginCode();
-        if (stored?.loginCode) {
-            try {
-                const token = await exchangeLoginCodeForToken(stored.loginCode);
-                const tokenFilePath = await storeToken(token);
-                process.stdout.write('Stored GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
-                return token;
-            } catch (e) {
-                process.stdout.write('Exchanging stored login code failed, will prompt for a new one. Reason: ' + (e?.message || e) + '\n');
-            }
+        const tokenFromStoredCode = await tryExchangeStoredLoginCode();
+        if (tokenFromStoredCode) {
+            process.stdout.write('Authentication handled by: exchanged previously stored login code.\n');
+            return tokenFromStoredCode;
         }
     }
 
-    // 3) If caller provided a login URL/code, use it
+    // 3) If the caller provided a login URL/code, use it
     if (loginCodeUrl) {
-        const loginCode = extractLoginCode(loginCodeUrl);
-        const loginCodeFilePath = await storeLoginCode(loginCode);
-        process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFilePath + '\n');
-
-        const token = await exchangeLoginCodeForToken(loginCode);
-        const tokenFilePath = await storeToken(token);
-        process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
-        return token;
+        const tokenFromProvided = await handleProvidedLoginCode(loginCodeUrl);
+        process.stdout.write('Authentication handled by: provided login URL/code.\n');
+        return tokenFromProvided;
     }
 
     // 4) Prompt for login code/URL interactively
-    const askForLoginCodeUrl = async () => {
-        return await new Promise((resolve) => {
-            const url = getAuthUrl();
-            process.stdout.write(`\nTo connect your GOG account, please follow these steps:\n\n`);
-            process.stdout.write(`1. Open this link in your browser: ${url}\n`);
-            process.stdout.write('2. Log in to your account.\n');
-            process.stdout.write('3. After logging in, you will see a blank page. Copy the URL from the address bar.\n');
-            process.stdout.write('4. Paste that URL here.\n\n');
-            process.stdout.write('URL: ');
-            process.stdin.setEncoding('utf8');
-            process.stdin.resume();
-            const onData = (chunk) => {
-                process.stdin.pause();
-                process.stdin.removeListener('data', onData);
-                resolve(String(chunk).trim());
-            };
-            process.stdin.on('data', onData);
-        });
-    };
+    const tokenFromInteractive = await handleInteractiveLogin();
+    process.stdout.write('Authentication handled by: interactive prompt URL/code.\n');
+    return tokenFromInteractive;
+}
 
-    const url = await askForLoginCodeUrl();
+async function tryRefreshWithStoredToken() {
+    try {
+        const existing = getStoredToken();
+        if (existing && existing.refresh_token) {
+            try {
+                const refreshed = await refreshAccessToken(existing.refresh_token);
+                const tokenFilePath = await storeToken(refreshed);
+                process.stdout.write('Existing GOG token refreshed successfully. Stored at: ' + tokenFilePath + '\n');
+                return refreshed;
+            } catch (e) {
+                process.stdout.write('Token refresh failed. Proceeding to login code flow. Reason: ' + (e?.message || e) + '\n');
+                return null;
+            }
+        }
+    } catch {
+        // ignore and continue
+    }
+    return null;
+}
 
+async function tryExchangeStoredLoginCode() {
+    try {
+        const stored = getStoredLoginCode();
+        if (stored?.loginCode) {
+            const token = await exchangeLoginCodeForToken(stored.loginCode);
+            const tokenFilePath = await storeToken(token);
+            process.stdout.write('Stored GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
+            return token;
+        }
+    } catch (e) {
+        process.stdout.write('Exchanging stored login code failed, will prompt for a new one. Reason: ' + (e?.message || e) + '\n');
+    }
+    return null;
+}
+
+async function handleProvidedLoginCode(loginCodeUrl) {
+    const loginCode = extractLoginCode(loginCodeUrl);
+    const loginCodeFilePath = await storeLoginCode(loginCode);
+    process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFilePath + '\n');
+
+    const token = await exchangeLoginCodeForToken(loginCode);
+    const tokenFilePath = await storeToken(token);
+    process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFilePath + '\n');
+    return token;
+}
+
+async function handleInteractiveLogin() {
+    const url = await promptForLoginCodeUrl();
     const loginCode = extractLoginCode(url);
     const loginCodeFile = await storeLoginCode(loginCode);
     process.stdout.write('\nExtracted GOG-Login-Code successfully. Stored at: ' + loginCodeFile + '\n');
@@ -99,8 +105,27 @@ export async function loginFlow(loginCodeUrl = undefined) {
     const token = await exchangeLoginCodeForToken(loginCode);
     const tokenFile = await storeToken(token);
     process.stdout.write('GOG-Login-Code exchanged for token successfully. Stored at: ' + tokenFile + '\n');
-
     return token;
+}
+
+async function promptForLoginCodeUrl() {
+    return await new Promise((resolve) => {
+        const url = getAuthUrl();
+        process.stdout.write(`\nTo connect your GOG account, please follow these steps:\n\n`);
+        process.stdout.write(`1. Open this link in your browser: ${url}\n`);
+        process.stdout.write('2. Log in to your account.\n');
+        process.stdout.write('3. After logging in, you will see a blank page. Copy the URL from the address bar.\n');
+        process.stdout.write('4. Paste that URL here.\n\n');
+        process.stdout.write('URL: ');
+        process.stdin.setEncoding('utf8');
+        process.stdin.resume();
+        const onData = (chunk) => {
+            process.stdin.pause();
+            process.stdin.removeListener('data', onData);
+            resolve(String(chunk).trim());
+        };
+        process.stdin.on('data', onData);
+    });
 }
 
 function getAuthUrl() {
