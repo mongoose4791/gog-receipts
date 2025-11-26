@@ -127,13 +127,7 @@ async function tryExchangeStoredLoginCode() {
  */
 async function handleProvidedLoginCode(loginCodeUrl) {
     const loginCode = extractLoginCode(loginCodeUrl);
-    const loginCodeFilePath = await storeLoginCode(loginCode);
-    process.stdout.write('\nLogin code extracted and saved to: ' + loginCodeFilePath + '\n');
-
-    const token = await exchangeLoginCodeForToken(loginCode);
-    const tokenFilePath = await storeToken(token);
-    process.stdout.write('Token exchange successful. Saved to: ' + tokenFilePath + '\n');
-    return token;
+    return await exchangeAndPersistFromCode(loginCode);
 }
 
 /**
@@ -148,12 +142,25 @@ async function handleProvidedLoginCode(loginCodeUrl) {
 async function handleInteractiveLogin() {
     const url = await promptForLoginCodeUrl();
     const loginCode = extractLoginCode(url);
-    const loginCodeFile = await storeLoginCode(loginCode);
-    process.stdout.write('\nLogin code extracted and saved to: ' + loginCodeFile + '\n');
+    return await exchangeAndPersistFromCode(loginCode);
+}
+
+/**
+ * Exchange a login code for a token and persist both code and token.
+ * Consolidates the repeated steps used by provided and interactive flows.
+ *
+ * Side effects: Writes loginCode.json and token.json. Logs progress to stdout.
+ *
+ * @param {string} loginCode One-time code to exchange.
+ * @returns {Promise<object>} The token returned by the exchange endpoint.
+ */
+async function exchangeAndPersistFromCode(loginCode) {
+    const loginCodeFilePath = await storeLoginCode(loginCode);
+    process.stdout.write('\nLogin code extracted and saved to: ' + loginCodeFilePath + '\n');
 
     const token = await exchangeLoginCodeForToken(loginCode);
-    const tokenFile = await storeToken(token);
-    process.stdout.write('Token exchange successful. Saved to: ' + tokenFile + '\n');
+    const tokenFilePath = await storeToken(token);
+    process.stdout.write('Token exchange successful. Saved to: ' + tokenFilePath + '\n');
     return token;
 }
 

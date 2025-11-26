@@ -142,8 +142,8 @@ async function run() {
         process.exit(0);
     }
 
-    // Login flow
-    const token = await loginFlow(args.subArg);
+    // Login flow (no external code/URL in default command)
+    const token = await loginFlow();
 
     // Generate PDFs for all discovered receipt preview pages.
     const saved = await saveReceipts({
