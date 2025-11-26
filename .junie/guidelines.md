@@ -36,6 +36,7 @@
 - ESM imports only: import from 'node:test' and 'node:assert/strict'.
 - Test isolation from user config: use temp dir; set XDG_CONFIG_HOME; cleanup with fs.rmSync(..., { recursive: true, force: true }).
 - Do not assert on stdout/stderr; verify return values/state/files.
+- Run tests after each change
 
 ## Code style
 - Keep CLI thin; move logic to modules.
