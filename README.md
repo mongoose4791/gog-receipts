@@ -3,15 +3,14 @@
 ![GitHub stars](https://img.shields.io/github/stars/mongoose4791/gog-receipts)
 
 [![Hippocratic License HL3-CL-LAW-MIL-SOC-SV](https://img.shields.io/static/v1?label=Hippocratic%20License&message=HL3-CL-LAW-MIL-SOC-SV&labelColor=5e2751&color=bc8c3d)](https://firstdonoharm.dev/version/3/0/cl-law-mil-soc-sv.html)
-
 ![Node version](https://img.shields.io/badge/node-%E2%89%A520-brightgreen)
 ![GitHub issues](https://img.shields.io/github/issues/mongoose4791/gog-receipts)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/mongoose4791/gog-receipts)
 ![Last commit](https://img.shields.io/github/last-commit/mongoose4791/gog-receipts)
 
-A simple command-line tool for automatically downloading and storing your
-official [GOG](https://www.gog.com/) purchase receipts, providing easy access for tax, documentation,
-and long-term preservation.
+A Linux-based Node.js tool and library for automatically downloading and archiving
+official [GOG](https://www.gog.com/) purchase receipts as PDFs. Designed for tax documentation
+and digital preservation, it can be used as a standalone CLI or integrated programmatically into other projects.
 
 ## Compatibility
 
@@ -33,9 +32,9 @@ Follow these steps to get the project running locally.
 
 Use npm ci for a clean, reproducible installation:
 
-   ```sh
-   npm ci
-   ```
+```sh
+npm ci
+```
 
 ### Install the browser used by Puppeteer
 
@@ -43,31 +42,20 @@ This project uses [Puppeteer](https://pptr.dev/) with [Firefox](https://www.mozi
 downloads. Install the managed Firefox binary once
 using the provided script:
 
-   ```sh
-   npm run browser:install
-   ```
-
-## How it works
-
-- ESM-only: The project uses native ES modules. There is no build step; sources run directly on Node 20+.
-- Entry points:
-    - CLI: src/cli.js
-    - Library: src/gog-login/gog-login.js, src/save-receipt/save-receipts.js
-- Config location (Linux/XDG only):
-    - Root: $XDG_CONFIG_HOME/gog-receipts/ or ~/.config/gog-receipts/
-    - Files created by the login flow:
-        - loginCode.json: stores the last one-time login code with a timestamp
-        - token.json: stores the token payload (e.g., access_token, refresh_token)
-    - Parent directories are always created with fs.mkdirSync(dir, { recursive: true }).
+```sh
+npm run browser:install
+```
 
 ## Usage
 
-### Main CLI Command
+### 1. CLI Usage
+
+#### Main Command
 ```sh
 npm run cli -- [options]
 ```
 
-#### Options
+Options:
 
 | Option            | Alias | Description                                                                        | Default            |
 |:------------------|:------|:-----------------------------------------------------------------------------------|:-------------------|
@@ -79,17 +67,57 @@ npm run cli -- [options]
 | `--headful`       |       | Run browser with UI                                                                | `false` (headless) |
 | `--help`          | `-h`  | Show help                                                                          |                    |
 
-### Login flow only
+#### Login flow only
 
 ```sh
-npm run login
+npm run cli -- login
 ```
 
-### Run tests
+#### Run tests
 
-   ```sh
-   npm test
-   ```
+```sh
+npm test
+```
+
+### 2. Library Usage
+    
+You can import the core functions into your own Node.js project like this:
+    
+```javascript
+import { loginFlow, saveReceipts } from 'gog-receipts';
+
+// Example usage wrapped in an async function
+async function main() {
+  // 1. Login (interactive or with code)
+  // Returns the token object and saves it to config
+  const token = await loginFlow();
+    
+  // 2. Save receipts
+  // Returns an array of saved file paths
+  const savedFiles = await saveReceipts({
+    receiptsDir: './my-receipts',
+    token: token, // Optional if token is already saved in config
+    headless: true, // Run browser invisibly (default)
+    onProgress: (event) => console.log(event) 
+  });
+      
+  console.log(`Saved ${savedFiles.length} files.`);
+}
+    
+main();
+```
+
+
+- ESM-only: The project uses native ES modules. There is no build step; sources run directly on Node 20+.
+- Entry points:
+    - CLI: src/cli.js
+    - Library: src/index.js
+- Config location (Linux/XDG only):
+    - Root: $XDG_CONFIG_HOME/gog-receipts/ or ~/.config/gog-receipts/
+    - Files created by the login flow:
+        - loginCode.json: stores the last one-time login code with a timestamp
+        - token.json: stores the token payload (e.g., access_token, refresh_token)
+    - Parent directories are always created with fs.mkdirSync(dir, { recursive: true }).
 
 ## Contact
 

@@ -8,7 +8,7 @@
 
 ## Entry points
 - CLI: src/cli.js
-- Library: src/gog-login/gog-login.js, src/save-receipt/save-receipts.js
+- Library: src/index.js
 
 ## Config & files
 - Config root: $XDG_CONFIG_HOME or ~/.config/gog-receipts/

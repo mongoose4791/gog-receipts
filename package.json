@@ -1,7 +1,7 @@
 {
   "name": "gog-receipts",
   "version": "1.0.0",
-  "description": "A simple command-line tool for automatically downloading and storing your official GOG purchase receipts, providing easy access for tax, documentation, and long-term preservation.",
+  "description": "A Linux-based Node.js tool and library for automatically downloading and archiving official GOG purchase receipts as PDFs.",
   "keywords": [
     "gog",
     "receipt",
@@ -17,10 +17,10 @@
     "type": "git",
     "url": "git+https://github.com/mongoose4791/gog-receipts.git"
   },
-  "license": "Hippocratic-3.0",
+  "license": "Hippocratic HL3-CL-LAW-MIL-SOC-SV",
   "author": "mongoose4791 <mongoose4791@proton.me>",
   "type": "module",
-  "main": "src/cli.js",
+  "main": "src/index.js",
   "bin": {
     "gog-receipts": "./src/cli.js"
   },
