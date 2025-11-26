@@ -8,7 +8,7 @@
 ![Last commit](https://img.shields.io/github/last-commit/mongoose4791/gog-receipts)
 
 A simple command-line tool for automatically downloading and storing your
-official GOG purchase receipts, providing easy access for tax, documentation,
+official [GOG](https://www.gog.com/) purchase receipts, providing easy access for tax, documentation,
 and long-term preservation.
 
 ## Compatibility
@@ -21,32 +21,29 @@ and long-term preservation.
 
 Follow these steps to get the project running locally.
 
-1. Prerequisites
+### Prerequisites
+
     - Linux environment
-    - Install [Node.js] which includes [Node Package Manager][npm]
-    - Navigate into the root directory (where this README.md is) via CLI
 
-2. Install dependencies
+- Install [Node.js](https://nodejs.org/) which includes [Node Package Manager](https://www.npmjs.com/)
+- Navigate into the root directory (where this README.md is) via CLI
 
-   Use npm ci for a clean, reproducible install:
+### Installation of dependencies
+
+Use npm ci for a clean, reproducible installation:
 
    ```sh
    npm ci
    ```
 
-3. Install the browser used by Puppeteer
+### Install the browser used by Puppeteer
 
-   This project uses Puppeteer with Firefox for automating receipt downloads. Install the managed Firefox binary once
-   using the provided script:
+This project uses [Puppeteer](https://pptr.dev/) with [Firefox](https://www.mozilla.org/firefox/) for automating receipt
+downloads. Install the managed Firefox binary once
+using the provided script:
 
    ```sh
    npm run browser:install
-   ```
-
-4. Run tests
-
-   ```sh
-   npm test
    ```
 
 ## How it works
@@ -64,28 +61,34 @@ Follow these steps to get the project running locally.
 
 ## Usage
 
-Login flow only:
+### Main CLI Command
+```sh
+npm run cli -- [options]
+```
+
+#### Options
+
+| Option            | Alias | Description                                                                        | Default            |
+|:------------------|:------|:-----------------------------------------------------------------------------------|:-------------------|
+| `--receipts-dir`  | `-d`  | Output directory for PDFs                                                          | `receipts`         |
+| `--no-background` |       | Do not print CSS backgrounds                                                       | `false`            |
+| `--viewport`      | `-v`  | Viewport size as WIDTHxHEIGHT                                                      | `1280x800`         |
+| `--wait`          | `-w`  | WaitUntil event for navigation: load\|domcontentloaded\|networkidle0\|networkidle2 | `networkidle0`     |
+| `--timeout`       | `-t`  | Navigation timeout in ms                                                           | `60000`            |
+| `--headful`       |       | Run browser with UI                                                                | `false` (headless) |
+| `--help`          | `-h`  | Show help                                                                          |                    |
+
+### Login flow only
 
 ```sh
 npm run login
 ```
 
-Full CLI (login then download receipts):
+### Run tests
 
-```sh
-npm run cli -- [options]
-```
-
-### Options
-
-| Option            | Alias | Description                                                                  | Default            |
-|:------------------|:------|:-----------------------------------------------------------------------------|:-------------------|
-| `--receipts-dir`  | `-d`  | Output directory for PDFs                                                    | `receipts`         |
-| `--no-background` |       | Disable CSS backgrounds in PDFs                                              | `false`            |
-| `--viewport`      | `-v`  | Viewport size (WIDTHxHEIGHT)                                                 | `1280x800`         |
-| `--wait`          | `-w`  | WaitUntil event (`load`, `domcontentloaded`, `networkidle0`, `networkidle2`) | `networkidle0`     |
-| `--timeout`       | `-t`  | Navigation timeout in ms                                                     | `60000`            |
-| `--headful`       |       | Run browser with UI                                                          | `false` (headless) |
+   ```sh
+   npm test
+   ```
 
 ## Contact
 
@@ -94,4 +97,4 @@ Issues and pull requests are welcome on [GitHub](https://github.com/mongoose4791
 ## Roadmap
 
 - Secure token storage using system keychain (e.g., keytar).
-- Improved receipt link discovery.
+- Improve receipt link discovery to use a more robust API-based approach instead of web scraping.
