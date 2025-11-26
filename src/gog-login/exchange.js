@@ -1,4 +1,4 @@
-import { getNewTokenUrl, getRefreshTokenUrl } from './urls.js';
+import {getNewTokenUrl, getRefreshTokenUrl} from './urls.js';
 
 /**
  * Exchange a one-time login code for a token by calling GOG's endpoint.
@@ -8,12 +8,12 @@ import { getNewTokenUrl, getRefreshTokenUrl } from './urls.js';
  * @returns {Promise<object>} Parsed token payload returned by the server.
  */
 export async function exchangeLoginCodeForToken(loginCode) {
-  const res = await fetch(getNewTokenUrl(loginCode).toString(), { method: 'GET' });
-  const txt = await res.text();
-  if (!res.ok) {
-    throw new Error(`Token fetch failed. Status: ${res.status}. Response: ${txt}`);
-  }
-  return JSON.parse(txt);
+    const res = await fetch(getNewTokenUrl(loginCode).toString(), {method: 'GET'});
+    const txt = await res.text();
+    if (!res.ok) {
+        throw new Error(`Token fetch failed. Status: ${res.status}. Response: ${txt}`);
+    }
+    return JSON.parse(txt);
 }
 
 /**
@@ -23,10 +23,10 @@ export async function exchangeLoginCodeForToken(loginCode) {
  * @returns {Promise<object>} Parsed token payload returned by the server.
  */
 export async function refreshAccessToken(refreshToken) {
-  const res = await fetch(getRefreshTokenUrl(refreshToken).toString(), { method: 'GET' });
-  const txt = await res.text();
-  if (!res.ok) {
-    throw new Error(`Token refresh failed. Status: ${res.status}. Response: ${txt}`);
-  }
-  return JSON.parse(txt);
+    const res = await fetch(getRefreshTokenUrl(refreshToken).toString(), {method: 'GET'});
+    const txt = await res.text();
+    if (!res.ok) {
+        throw new Error(`Token refresh failed. Status: ${res.status}. Response: ${txt}`);
+    }
+    return JSON.parse(txt);
 }

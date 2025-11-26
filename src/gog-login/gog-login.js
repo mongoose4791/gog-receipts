@@ -2,8 +2,8 @@
 // This file re-exports a curated API while delegating implementation to
 // smaller modules for clarity and testability.
 
-import { getAuthUrl } from './urls.js';
-import { exchangeLoginCodeForToken, refreshAccessToken } from './exchange.js';
+import {getAuthUrl} from './urls.js';
+import {exchangeLoginCodeForToken, refreshAccessToken} from './exchange.js';
 import {
     storeLoginCode,
     getStoredLoginCode,
@@ -215,4 +215,4 @@ export function extractLoginCode(codeOrUrl) {
 }
 
 // Re-export selected persistence helpers as part of the public API
-export { storeLoginCode, getStoredLoginCode, getStoredToken };
+export {storeLoginCode, getStoredLoginCode, getStoredToken};

@@ -1,8 +1,9 @@
 import puppeteer from 'puppeteer';
 import fs from 'node:fs';
 import path from 'node:path';
-import { waitForPageSettled, collectPreviewLinksAllPages, extractPurchaseDate } from './page-utils.js';
-import { makeReceiptFilename } from './filename.js';
+import {waitForPageSettled, collectPreviewLinksAllPages, extractPurchaseDate} from './page-utils.js';
+import {makeReceiptFilename} from './filename.js';
+
 const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
 
 // Refactored: helpers moved to ./page-utils.js and ./filename.js
@@ -36,16 +37,16 @@ const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
  * @returns {Promise<string[]>} The list of saved PDF paths.
  */
 export async function saveReceipts({
-   receiptsDir = 'receipts',
-   printBackground = true,
-   viewport = {width: 1280, height: 800},
-   waitUntil = 'networkidle0',
-   timeout = 60000,
-   headless = true,
-   useToken = true,
-   token,
-   onProgress,
-} = {}) {
+                                       receiptsDir = 'receipts',
+                                       printBackground = true,
+                                       viewport = {width: 1280, height: 800},
+                                       waitUntil = 'networkidle0',
+                                       timeout = 60000,
+                                       headless = true,
+                                       useToken = true,
+                                       token,
+                                       onProgress,
+                                   } = {}) {
 
     // const browser = await puppeteer.launch({headless: false, product: 'firefox'});
     const browser = await puppeteer.launch({
@@ -67,7 +68,7 @@ export async function saveReceipts({
             }
         }
 
-        onProgress?.({ type: 'navigating', url: ORDERS_URL });
+        onProgress?.({type: 'navigating', url: ORDERS_URL});
         await page.goto(ORDERS_URL, {waitUntil, timeout});
 
         // Wait until the page is fully settled before scraping/generating output.
@@ -80,7 +81,7 @@ export async function saveReceipts({
             timeout,
             (info) => onProgress?.(info)
         );
-        onProgress?.({ type: 'found', count: absoluteUrls.length });
+        onProgress?.({type: 'found', count: absoluteUrls.length});
 
         // Ensure output directory exists.
         fs.mkdirSync(receiptsDir, {recursive: true});
@@ -91,7 +92,7 @@ export async function saveReceipts({
         // Reuse the same page for authenticated context; navigate to each preview and save as PDF.
         for (let i = 0; i < absoluteUrls.length; i++) {
             const url = absoluteUrls[i];
-            onProgress?.({ type: 'processing', index: i, total: absoluteUrls.length, url });
+            onProgress?.({type: 'processing', index: i, total: absoluteUrls.length, url});
             await page.goto(url, {waitUntil, timeout});
             await waitForPageSettled(page, timeout);
 
@@ -105,10 +106,10 @@ export async function saveReceipts({
             const filePath = path.join(receiptsDir, `${baseName}.pdf`);
             await page.pdf({path: filePath, format: 'A4', printBackground});
             saved.push(filePath);
-            onProgress?.({ type: 'saved', index: i, total: absoluteUrls.length, url, path: filePath });
+            onProgress?.({type: 'saved', index: i, total: absoluteUrls.length, url, path: filePath});
         }
 
-        onProgress?.({ type: 'done', saved: saved.length });
+        onProgress?.({type: 'done', saved: saved.length});
         return saved;
     } finally {
         await browser.close();

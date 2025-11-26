@@ -19,7 +19,7 @@ Note on OS support: This project targets Linux only. We adhere strictly to Linux
 
 ## Compatibility
 
-- Operating system: Linux only. Windows and macOS are not supported; contributions that add complexity solely for non-Linux platforms will not be accepted.
+- Operating system: Linux only. Windows and macOS are not supported; 
 - Runtime: Node.js 20+ only. While Node 18+ may happen to work during development, the project targets Node 20 for CI and local development.
 - Irrelevance of legacy compatibility: Supporting older Node versions or legacy environments is out of scope. We avoid shims/polyfills and prefer modern, standard APIs (ESM modules, global fetch, node:test). Requests to add complexity solely to support older versions will not be accepted.
 

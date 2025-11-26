@@ -170,7 +170,8 @@ async function run() {
                         process.stdout.write(`Done. Saved ${evt.saved} file(s).\n`);
                         break;
                 }
-            } catch {}
+            } catch {
+            }
         }
     });
     process.stdout.write(`Saved ${saved.length} receipt PDF(s) to ${args.receiptsDir}\n`);

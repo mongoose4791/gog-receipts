@@ -21,12 +21,12 @@ export const TOKEN__GRANT_TYPE__REFRESH = 'refresh_token';
  * @returns {URL} Fully constructed authorization URL object.
  */
 export function getAuthUrl() {
-  const url = new URL(AUTH_URL);
-  url.searchParams.set('client_id', AUTH__CLIENT_ID);
-  url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
-  url.searchParams.set('response_type', AUTH__RESPONSE_TYPE);
-  url.searchParams.set('layout', AUTH__LAYOUT);
-  return url;
+    const url = new URL(AUTH_URL);
+    url.searchParams.set('client_id', AUTH__CLIENT_ID);
+    url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
+    url.searchParams.set('response_type', AUTH__RESPONSE_TYPE);
+    url.searchParams.set('layout', AUTH__LAYOUT);
+    return url;
 }
 
 /**
@@ -36,13 +36,13 @@ export function getAuthUrl() {
  * @returns {URL} Fully constructed token exchange URL.
  */
 export function getNewTokenUrl(loginCode) {
-  const url = new URL(TOKEN__URL);
-  url.searchParams.set('client_id', AUTH__CLIENT_ID);
-  url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
-  url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__NEW_LOGIN);
-  url.searchParams.set('code', loginCode);
-  url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
-  return url;
+    const url = new URL(TOKEN__URL);
+    url.searchParams.set('client_id', AUTH__CLIENT_ID);
+    url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
+    url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__NEW_LOGIN);
+    url.searchParams.set('code', loginCode);
+    url.searchParams.set('redirect_uri', AUTH__REDIRECT_URI);
+    return url;
 }
 
 /**
@@ -52,10 +52,10 @@ export function getNewTokenUrl(loginCode) {
  * @returns {URL} Fully constructed refresh URL.
  */
 export function getRefreshTokenUrl(refreshToken) {
-  const url = new URL(TOKEN__URL);
-  url.searchParams.set('client_id', AUTH__CLIENT_ID);
-  url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
-  url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__REFRESH);
-  url.searchParams.set('refresh_token', refreshToken);
-  return url;
+    const url = new URL(TOKEN__URL);
+    url.searchParams.set('client_id', AUTH__CLIENT_ID);
+    url.searchParams.set('client_secret', TOKEN__CLIENT_SECRET);
+    url.searchParams.set('grant_type', TOKEN__GRANT_TYPE__REFRESH);
+    url.searchParams.set('refresh_token', refreshToken);
+    return url;
 }

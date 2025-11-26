@@ -9,10 +9,10 @@
  * @returns {string} Sanitized string suitable for filenames.
  */
 export function sanitizeForFilename(input) {
-  return input
-    .replace(/[^a-zA-Z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
+    return input
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-+/g, '-');
 }
 
 /**
@@ -25,11 +25,11 @@ export function sanitizeForFilename(input) {
  * @returns {string} Base filename without extension.
  */
 export function makeReceiptFilename(token, purchaseDate) {
-  const safeDate = purchaseDate ? sanitizeForFilename(purchaseDate) : '';
-  return safeDate ? `${safeDate} Order ${token}` : token;
+    const safeDate = purchaseDate ? sanitizeForFilename(purchaseDate) : '';
+    return safeDate ? `${safeDate} Order ${token}` : token;
 }
 
 export default {
-  sanitizeForFilename,
-  makeReceiptFilename,
+    sanitizeForFilename,
+    makeReceiptFilename,
 };
