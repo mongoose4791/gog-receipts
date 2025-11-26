@@ -1,79 +1,59 @@
-Project development guidelines
+# Guidelines for Junie
 
-Scope and audience
-- This document captures project-specific knowledge for advanced contributors to gog-receipts. It focuses on build/configuration, testing strategy with Node’s built-in test runner, and development/debugging tips relevant to this codebase.
+## Runtime
+- Linux only (XDG paths).
+- Node.js 20+.
+- ESM only (type: module). No CommonJS.
+- No build step; run sources directly.
 
-Runtime, build, and configuration
-- Node.js version: Target Node 20+ (Node 18+ may work, but the repository relies on node:test and ESM; Node 20 is recommended for parity with CI and local development).
-- Package type: ESM ("type": "module"). Use import/export; do not mix CommonJS.
-- Build step: None. This is a pure Node project; run sources directly.
-- Entry points:
-  - CLI: src/cli.js, exposed via the bin field as gog-receipts.
-  - Library modules: src/gog-login/gog-login.js, src/save-receipt.js.
-- Dependencies:
-  - puppeteer is required for browser automation in receipt downloads. Tests should avoid launching a browser; use stubs/mocks instead.
+## Entry points
+- CLI: src/cli.js
+- Library: src/gog-login/gog-login.js, src/save-receipt.js
 
-Configuration and environment
-- Config directory resolution follows Linux XDG conventions only:
-  - XDG_CONFIG_HOME is respected if set; otherwise defaults to ~/.config.
-  - Files are written under the vendor app dir e.g. <config-root>/gog-receipts/.
-- Auth artifacts:
-  - loginCode.json stores a recent one-time login code and metadata.
-  - token.json stores the OAuth-like token payload (current implementation writes to disk; see README TODOs for secure storage via keytar in the future).
-- Network:
-  - Authentication exchanges are performed via global fetch; modules construct URLs internally and perform GET requests to GOG endpoints.
+## Config & files
+- Config root: $XDG_CONFIG_HOME or ~/.config/gog-receipts/
+- Files: loginCode.json (last one-time code), token.json (token payload). Both shall never be committed.
+- Always mkdir parent dirs: fs.mkdirSync(dir, { recursive: true })
 
-Local development workflow
-- Install dependencies once: npm ci (or npm install).
-- Run the CLI locally:
-  - npm run cli
-  - npm run login for the login subcommand.
-  - You can invoke the binary directly after npm link if desired: gog-receipts login
-- Avoid committing real credentials or tokens. Tests must not perform real logins or network calls.
+## Network & auth
+- Use global fetch; internal modules build GOG URLs and GET.
+- No real network in tests; stub globalThis.fetch.
 
-Testing
-- Runner: Node’s built-in test runner (node --test) configured by the package.json script: npm test.
-- File discovery: Any .test.js file is automatically discovered by node --test. Keep tests colocated under src/ or in a dedicated test directory; current repo places tests next to modules for convenience.
-- ESM considerations: Use import from 'node:test' and 'node:assert/strict'. Do not use require().
-- Isolation from user config: For any test that touches the on-disk config, set up a temporary config home so tests do not read/write the real user profile. Example pattern from src/gog-login/gog-login.test.js:
-  - Create a temp directory with fs.mkdtempSync.
-  - Override process.env.XDG_CONFIG_HOME for the duration of the test.
-  - Cleanup the directory after the test using fs.rmSync(..., { recursive: true, force: true }).
-- No real network: Stub globalThis.fetch in tests to return deterministic responses. Example used in loginFlow tests returns a 200 with a JSON payload for token exchange.
-- Puppeteer: Do not launch Chromium in unit tests. The receipt download flow should be structured to make side effects injectable/mocked. Where unavoidable, gate code paths behind feature flags and do not execute those in unit tests.
- - Stdout/stderr: Do not assert on stdout or stderr in unit tests. Validate behavior via return values, state changes, or persisted artifacts instead. Logging is non-contractual and may change; tests should not fail due to log output wording or presence.
+## Puppeteer
+- Required for receipt download in runtime.
+- Do not launch browsers in unit tests; mock/feature-flag side effects.
 
-Code style and structure
-- ESM with top-level imports only; avoid dynamic require.
-- Prefer small, single-purpose functions. Keep the CLI thin (src/cli.js) and move logic into modules to enable unit testing.
-- JSDoc typing: All functions must include explicit JSDoc with @param and @returns tags, including concrete types. For async functions use Promise<...>; use void for procedures with no return. Document optional parameters with brackets and defaults where applicable.
-- Side effects
-  - All filesystem and network side effects should remain in leaf functions with narrow interfaces so they can be mocked/stubbed in tests.
-  - When reading/writing config files, always create parent directories with fs.mkdirSync(dir, { recursive: true }).
-
-Debugging and troubleshooting tips
-- Verbose logs: The auth/login code prints status messages to stdout; tests avoid asserting on stdout. When debugging locally, observe these logs to follow the decision path.
-- Inspect config: If something goes wrong, check the resolved config path and the token/loginCode files written under it.
-- Network failures: Token exchange and refresh throw with error messages including HTTP status and response text. Capture these when filing issues.
-
-Security notes
-- Token storage: As noted in README TODOs, token storage should migrate to a secure credential store (e.g., keytar). Do not share token.json or commit it.
-- Test isolation: Never run tests against real GOG endpoints. Always stub fetch.
-
-Commands cheat sheet
-- Install deps: npm ci
+## Development
+- Install: npm ci
 - Run CLI: npm run cli
-- Login: npm run login
-- Run tests: npm test
+- Login subcommand: npm run login
+- Tests: npm test
+- Never commit credentials or tokens.
 
-Compatibility policy
-- Target runtime: Node 20+ only. While Node 18+ may work during development, maintaining compatibility with older Node versions or legacy environments is explicitly out of scope for this project.
-- Irrelevance of legacy compatibility: We will not accept complexity solely to support older Node releases, legacy package managers, or historical OS conventions. Prefer modern, standard APIs (ESM, global fetch, node:test) without shims/polyfills.
-- Contributor guidance: When adding features, assume a modern environment and avoid conditional code paths for older runtimes. If a change incidentally breaks older versions but remains correct on Node 20+, it is acceptable.
-- Backward compatibility: Old versions of this project will not be supported.
-- Tests covering backwards compatibility: No.
-- Changing tests to reflect new behavior: Yes, as long as the change is intentional.
+## Testing
+- Runner: node --test (Node’s built-in).
+- Discover: any .test.js.
+- ESM imports only: import from 'node:test' and 'node:assert/strict'.
+- Test isolation from user config: use temp dir; set XDG_CONFIG_HOME; cleanup with fs.rmSync(..., { recursive: true, force: true }).
+- Do not assert on stdout/stderr; verify return values/state/files.
 
-Documentation policy
-- If README.md is changed, ensure it is properly formatted: use valid Markdown structure; headings, lists, links, and code blocks must render correctly. Run any Markdown linting/formatting tools used by the project before committing.
-- Only update README.md on demand. Avoid incidental, cosmetic, or drive-by edits in PRs that do not otherwise require documentation changes.
+## Code style
+- Keep CLI thin; move logic to modules.
+- Small, single-purpose functions.
+- JSDoc on all functions with @param and @returns (Promise<...> for async; void for procedures). Document optionals with [name].
+
+## Compatibility
+- Modern environment only; no shims/polyfills for older Node.
+- Breaking older Node is acceptable if Node 20+ works.
+- Backwards compatibility to older versions of the project is not a goal
+
+## Docs
+- Update README on every change; keep Markdown valid.
+
+## Code style
+- no single-line if statements
+- no single-line loops
+- 4 spaces represent one tab
+
+## Git
+- Perform a commit after each change.
