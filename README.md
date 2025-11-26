@@ -13,7 +13,7 @@ and long-term preservation.
 
 ## Compatibility
 
-- Operating system: Linux only. Windows and macOS are not supported;
+- Operating system: Linux only. Windows and macOS are not supported.
 - Runtime: Node.js 20+ only. While Node 18+ may happen to work during development, the project targets Node 20 for CI
   and local development.
 
@@ -23,8 +23,7 @@ Follow these steps to get the project running locally.
 
 ### Prerequisites
 
-    - Linux environment
-
+- Linux environment
 - Install [Node.js](https://nodejs.org/) which includes [Node Package Manager](https://www.npmjs.com/)
 - Navigate into the root directory (where this README.md is) via CLI
 
