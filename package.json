@@ -11,14 +11,14 @@
   ],
   "homepage": "https://github.com/mongoose4791/gog-receipts#readme",
   "bugs": {
-    "url": "https://github.com/mongoose4791/gog-receipts/issues"
+    "url": "https://github.com/mongoose4791/gog-receipts/issues",
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mongoose4791/gog-receipts.git"
   },
   "license": "Hippocratic-3.0",
-  "author": "mongoose4791",
+  "author": "mongoose4791 <mongoose4791@proton.me>",
   "type": "module",
   "main": "src/cli.js",
   "bin": {

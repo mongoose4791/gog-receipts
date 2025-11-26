@@ -67,6 +67,12 @@ Follow these steps to get the project running locally.
    npm test
    ```
 
+## Contact
+
+For questions, issues, or security disclosures, please reach out to me
+at [GitHub](https://github.com/mongoose4791/gog-receipts).
+Answers may take a long time. This repo is not the center of my life.
+
 ## TODOs
 
 - Add keytar (or a similar package like node-keytar) to store the sensitive token securely instead of writing it to a file.

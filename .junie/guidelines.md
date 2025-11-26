@@ -8,7 +8,7 @@
 
 ## Entry points
 - CLI: src/cli.js
-- Library: src/gog-login/gog-login.js, src/save-receipt.js
+- Library: src/gog-login/gog-login.js, src/save-receipt/save-receipts.js
 
 ## Config & files
 - Config root: $XDG_CONFIG_HOME or ~/.config/gog-receipts/
@@ -21,7 +21,7 @@
 
 ## Puppeteer
 - Required for receipt download in runtime.
-- Do not launch browsers in unit tests; mock/feature-flag side effects.
+- Do not launch browsers in unit tests.
 
 ## Development
 - Install: npm ci
@@ -54,6 +54,3 @@
 - no single-line if statements
 - no single-line loops
 - 4 spaces represent one tab
-
-## Git
-- Perform a commit after each change.
