@@ -23,7 +23,8 @@ Follow these steps to get the project running locally.
 
 1. Prerequisites
     - Linux environment
-    - Node.js 20+ (recommended for parity with CI)
+    - Install [Node.js] which includes [Node Package Manager][npm]
+    - Navigate into the root directory (where this README.md is) via CLI
 
 2. Install dependencies
 
@@ -77,14 +78,14 @@ npm run cli -- [options]
 
 ### Options
 
-| Option | Alias | Description | Default |
-| :--- | :--- | :--- | :--- |
-| `--receipts-dir` | `-d` | Output directory for PDFs | `receipts` |
-| `--no-background` | | Disable CSS backgrounds in PDFs | `false` |
-| `--viewport` | `-v` | Viewport size (WIDTHxHEIGHT) | `1280x800` |
-| `--wait` | `-w` | WaitUntil event (`load`, `domcontentloaded`, `networkidle0`, `networkidle2`) | `networkidle0` |
-| `--timeout` | `-t` | Navigation timeout in ms | `60000` |
-| `--headful` | | Run browser with UI | `false` (headless) |
+| Option            | Alias | Description                                                                  | Default            |
+|:------------------|:------|:-----------------------------------------------------------------------------|:-------------------|
+| `--receipts-dir`  | `-d`  | Output directory for PDFs                                                    | `receipts`         |
+| `--no-background` |       | Disable CSS backgrounds in PDFs                                              | `false`            |
+| `--viewport`      | `-v`  | Viewport size (WIDTHxHEIGHT)                                                 | `1280x800`         |
+| `--wait`          | `-w`  | WaitUntil event (`load`, `domcontentloaded`, `networkidle0`, `networkidle2`) | `networkidle0`     |
+| `--timeout`       | `-t`  | Navigation timeout in ms                                                     | `60000`            |
+| `--headful`       |       | Run browser with UI                                                          | `false` (headless) |
 
 ## Contact
 
