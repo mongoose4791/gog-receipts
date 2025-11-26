@@ -2,9 +2,6 @@
 
 ![GitHub stars](https://img.shields.io/github/stars/mongoose4791/gog-receipts)
 
-[![Star this repository](https://img.shields.io/github/stars/mongoose4791/gog-receipts?style=social)](https://github.com/mongoose4791/gog-receipts/stargazers)
-
-
 [![Hippocratic License HL3-CL-LAW-MIL-SOC-SV](https://img.shields.io/static/v1?label=Hippocratic%20License&message=HL3-CL-LAW-MIL-SOC-SV&labelColor=5e2751&color=bc8c3d)](https://firstdonoharm.dev/version/3/0/cl-law-mil-soc-sv.html)
 ![Node version](https://img.shields.io/badge/node-%E2%89%A520-brightgreen)
 ![GitHub issues](https://img.shields.io/github/issues/mongoose4791/gog-receipts)
