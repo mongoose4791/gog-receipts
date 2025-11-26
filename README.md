@@ -107,18 +107,6 @@ async function main() {
 main();
 ```
 
-
-- ESM-only: The project uses native ES modules. There is no build step; sources run directly on Node 20+.
-- Entry points:
-    - CLI: src/cli.js
-    - Library: src/index.js
-- Config location (Linux/XDG only):
-    - Root: $XDG_CONFIG_HOME/gog-receipts/ or ~/.config/gog-receipts/
-    - Files created by the login flow:
-        - loginCode.json: stores the last one-time login code with a timestamp
-        - token.json: stores the token payload (e.g., access_token, refresh_token)
-    - Parent directories are always created with fs.mkdirSync(dir, { recursive: true }).
-
 ## Contact
 
 Issues and pull requests are welcome on [GitHub](https://github.com/mongoose4791/gog-receipts).
