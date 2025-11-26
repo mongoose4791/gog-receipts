@@ -52,7 +52,7 @@ export async function loginFlow(loginCodeUrl = undefined) {
     }
 
     // 4) If nothing works, prompt for login code/URL interactively
-    process.stdout.write('If nothing works, prompt for login code/URL interactively...\n');
+    process.stdout.write('If nothing works (and that\'s ok), prompt for login code/URL interactively...\n');
     const tokenFromInteractive = await handleInteractiveLogin();
     process.stdout.write('Login successful.\n');
     return tokenFromInteractive;
