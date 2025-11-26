@@ -81,28 +81,22 @@ Full CLI (login then download receipts):
 npm run cli -- [options]
 ```
 
-Options:
+### Options
 
-- --receipts-dir, -d: Output directory for PDFs (default: receipts)
-- --no-background: Do not print CSS backgrounds
-- --viewport, -v: Viewport size as WIDTHxHEIGHT (default: 1280x800)
-- --wait, -w: load|domcontentloaded|networkidle0|networkidle2 (default: networkidle0)
-- --timeout, -t: Navigation timeout in ms (default: 60000)
-- --headful: Run browser with UI (default is headless)
-
-Notes:
-
-- Linux only. Windows and macOS paths are not supported.
+| Option | Alias | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `--receipts-dir` | `-d` | Output directory for PDFs | `receipts` |
+| `--no-background` | | Disable CSS backgrounds in PDFs | `false` |
+| `--viewport` | `-v` | Viewport size (WIDTHxHEIGHT) | `1280x800` |
+| `--wait` | `-w` | WaitUntil event (`load`, `domcontentloaded`, `networkidle0`, `networkidle2`) | `networkidle0` |
+| `--timeout` | `-t` | Navigation timeout in ms | `60000` |
+| `--headful` | | Run browser with UI | `false` (headless) |
 
 ## Contact
 
-For questions, issues, or security disclosures, please reach out to me
-at [GitHub](https://github.com/mongoose4791/gog-receipts).
-Answers may take a long time. This repo is not the center of my life.
+Issues and pull requests are welcome on [GitHub](https://github.com/mongoose4791/gog-receipts).
 
-## TODOs
+## Roadmap
 
-- Add keytar (or a similar package like node-keytar) to store the sensitive token securely instead of writing it to a
-  file.
-- cleanup
-- better way to gather links to receipts
+- Secure token storage using system keychain (e.g., keytar).
+- Improved receipt link discovery.
