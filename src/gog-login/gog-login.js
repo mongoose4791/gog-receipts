@@ -191,7 +191,9 @@ async function promptForLoginCodeUrl() {
  * @returns {string} Extracted code string.
  */
 export function extractLoginCode(codeOrUrl) {
-    if (!codeOrUrl) throw new Error('No code or URL provided.');
+    if (!codeOrUrl) {
+        throw new Error('No code or URL provided.');
+    }
 
     const input = String(codeOrUrl).trim();
     // Try to parse as URL first. Only treat it as non-URL if URL parsing throws.
@@ -204,13 +206,17 @@ export function extractLoginCode(codeOrUrl) {
 
     if (urlObj) {
         const codeFromUrl = urlObj.searchParams.get('code');
-        if (codeFromUrl) return codeFromUrl;
+        if (codeFromUrl) {
+            return codeFromUrl;
+        }
         // If it's a URL but no code param, treat as error
         throw new Error('The URL does not contain a valid code.');
     }
 
     // Not a URL — assume the input itself is the code
-    if (!input) throw new Error('Empty code provided.');
+    if (!input) {
+        throw new Error('Empty code provided.');
+    }
     return input;
 }
 

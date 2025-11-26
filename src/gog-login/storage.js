@@ -15,7 +15,9 @@ const TOKEN_FILE_NAME = 'token.json';
  * @returns {string} Absolute path to the config file.
  */
 function defaultConfigPath(filename) {
-    if (!filename) throw new Error('No filename provided.');
+    if (!filename) {
+        throw new Error('No filename provided.');
+    }
     const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
     return path.join(base, 'gog-receipts', filename);
 }
@@ -28,7 +30,9 @@ function defaultConfigPath(filename) {
  * @returns {Promise<string>} Absolute path of the file written.
  */
 export async function storeLoginCode(loginCode) {
-    if (!loginCode) throw new Error('Missing code to store.');
+    if (!loginCode) {
+        throw new Error('Missing code to store.');
+    }
     const file = defaultConfigPath(LOGIN_CODE_FILE_NAME);
     const dir = path.dirname(file);
     fs.mkdirSync(dir, {recursive: true});
@@ -45,10 +49,14 @@ export async function storeLoginCode(loginCode) {
 export function getStoredLoginCode() {
     try {
         const file = defaultConfigPath(LOGIN_CODE_FILE_NAME);
-        if (!fs.existsSync(file)) return null;
+        if (!fs.existsSync(file)) {
+            return null;
+        }
         const raw = fs.readFileSync(file, 'utf8');
         const data = JSON.parse(raw);
-        if (typeof data?.loginCode === 'string' && data.loginCode.length > 0) return data;
+        if (typeof data?.loginCode === 'string' && data.loginCode.length > 0) {
+            return data;
+        }
         return null;
     } catch {
         return null;
@@ -64,13 +72,17 @@ export function getStoredLoginCode() {
 export function getStoredToken() {
     try {
         const file = defaultConfigPath(TOKEN_FILE_NAME);
-        if (!fs.existsSync(file)) return null;
+        if (!fs.existsSync(file)) {
+            return null;
+        }
         const raw = fs.readFileSync(file, 'utf8');
         const data = JSON.parse(raw);
         const hasAccess = typeof data.access_token === 'string' && data.access_token.length > 0;
         const hasRefresh = typeof data.refresh_token === 'string' && data.refresh_token.length > 0;
         const hasCode = typeof data.code === 'string' && data.code.length > 0;
-        if (!(hasAccess || hasRefresh || hasCode)) return null;
+        if (!(hasAccess || hasRefresh || hasCode)) {
+            return null;
+        }
         return data;
     } catch {
         return null;
@@ -84,7 +96,9 @@ export function getStoredToken() {
  * @returns {Promise<string>} Absolute path of the file written.
  */
 export async function storeToken(token) {
-    if (!token) throw new Error('Missing token to store.');
+    if (!token) {
+        throw new Error('Missing token to store.');
+    }
     const file = defaultConfigPath(TOKEN_FILE_NAME);
     const dir = path.dirname(file);
     fs.mkdirSync(dir, {recursive: true});

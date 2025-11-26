@@ -65,7 +65,9 @@ function parseArgs(argv) {
     while (parts.length) {
         const token = parts.shift();
 
-        if (token === '-h' || token === '--help') return {help: true};
+        if (token === '-h' || token === '--help') {
+            return {help: true};
+        }
 
         if (!opts.subcommand && (token === 'login')) {
             opts.subcommand = token;
@@ -96,7 +98,9 @@ function parseArgs(argv) {
                 const val = parts.shift();
                 if (val) {
                     const m = val.toLowerCase().match(/^(\d+)x(\d+)$/);
-                    if (m) opts.viewport = {width: parseInt(m[1], 10), height: parseInt(m[2], 10)};
+                    if (m) {
+                        opts.viewport = {width: parseInt(m[1], 10), height: parseInt(m[2], 10)};
+                    }
                 }
                 break;
             }
