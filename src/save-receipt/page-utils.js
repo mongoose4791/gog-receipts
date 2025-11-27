@@ -33,37 +33,6 @@ export async function waitForPageSettled(page, timeout) {
 }
 
 /**
- * Collect absolute URLs for GOG email preview links directly from the DOM.
- * Does not rely on CSS classes; uses a strict URL pattern filter instead.
- * Pattern: https://www.gog.com/en/email/preview/<hex>
- *
- * @param {import('puppeteer').Page} page Puppeteer page instance.
- * @returns {Promise<string[]>} List of unique, absolute URLs that match the pattern.
- */
-export async function collectPreviewLinks(page) {
-    return page.evaluate(() => {
-        const anchors = Array.from(document.querySelectorAll('a[href]'));
-        const base = 'https://www.gog.com';
-        const pattern = /^https:\/\/www\.gog\.com\/en\/email\/preview\/[0-9a-fA-F]+$/;
-        const out = new Set();
-        for (const a of anchors) {
-            const h = a.getAttribute('href');
-            if (!h) continue;
-            let abs;
-            try {
-                abs = new URL(h, base).href;
-            } catch {
-                continue;
-            }
-            if (pattern.test(abs)) {
-                out.add(abs);
-            }
-        }
-        return Array.from(out);
-    });
-}
-
-/**
  * Extract the purchase date text from the receipt preview page DOM.
  * On each page there is a span with the content "Date of purchase" and inside it a <b> element containing the date.
  *
@@ -89,6 +58,5 @@ export async function extractPurchaseDate(page) {
 
 export default {
     waitForPageSettled,
-    collectPreviewLinks,
     extractPurchaseDate,
 };

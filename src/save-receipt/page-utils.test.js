@@ -1,19 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {collectPreviewLinks, extractPurchaseDate} from './page-utils.js';
+import {extractPurchaseDate} from './page-utils.js';
 
-class FakeAnchor {
-    constructor(href) {
-        this._href = href;
-    }
-    getAttribute(name) {
-        if (name === 'href') {
-            return this._href;
-        }
-        return null;
-    }
-}
 
 class FakeSpan {
     constructor(text, boldText) {
@@ -35,16 +24,12 @@ class FakeBold {
 }
 
 class FakePage {
-    constructor({anchors = [], spans = []} = {}) {
-        this._anchors = anchors;
+    constructor({spans = []} = {}) {
         this._spans = spans;
     }
     async evaluate(fn, ...args) {
         const doc = {
             querySelectorAll: (sel) => {
-                if (sel === 'a[href]') {
-                    return this._anchors;
-                }
                 if (sel === 'span') {
                     return this._spans;
                 }
@@ -65,22 +50,6 @@ class FakePage {
     }
 }
 
-test('collectPreviewLinks filters and absolutizes only matching preview URLs', async () => {
-    const anchors = [
-        new FakeAnchor('/en/email/preview/abcdef'),              // relative, valid
-        new FakeAnchor('https://www.gog.com/en/email/preview/1234abcd'), // absolute, valid
-        new FakeAnchor('https://www.gog.com/en/email/preview/XYZ'),      // invalid (non-hex)
-        new FakeAnchor('https://www.gog.com/en/account/settings/orders'), // not a preview
-        new FakeAnchor('mailto:support@gog.com'), // not http(s)
-    ];
-    const page = new FakePage({anchors});
-    const urls = await collectPreviewLinks(page);
-    urls.sort();
-    assert.deepEqual(urls, [
-        'https://www.gog.com/en/email/preview/1234abcd',
-        'https://www.gog.com/en/email/preview/abcdef',
-    ]);
-});
 
 test('extractPurchaseDate returns the bolded date when span contains "Date of purchase"', async () => {
     const spans = [

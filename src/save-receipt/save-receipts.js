@@ -15,9 +15,11 @@ import {fetchOrders} from '../gog-api/fetch-orders.js';
  * (locale preserved) and navigate to it when rendering the PDF. The function then renders
  * each preview page to PDF.
  *
- * Filenames: Each PDF filename prefers the purchase date found on the receipt page
- * (span containing the text "Date of purchase" with a nested <b> date). The date is
- * sanitized for filesystem safety and combined with the preview token for uniqueness,
+ * Filenames: Each PDF filename prefers the purchase date coming from the Orders API
+ * (order.date seconds-based UNIX timestamp) and falls back to scraping the receipt page
+ * (span containing the text "Date of purchase" with a nested <b> date) when missing.
+ * The date is formatted as YYYY-MM-DD, sanitized for filesystem safety and combined with the
+ * preview token for uniqueness,
  * e.g., "2024-11-05-Order-1234-abcdef.pdf". If no date is found, the token alone is used.
  *
  * @param {Object} [options] Options for rendering and navigation.
@@ -72,6 +74,8 @@ export async function saveReceipts({
 
         /** @type {string[]} */
         const absoluteUrls = [];
+        /** @type {Map<string, number>} */
+        const urlToDateSeconds = new Map();
         const seen = new Set();
         for (const o of orders) {
             const href = o?.receiptLink;
@@ -87,6 +91,10 @@ export async function saveReceipts({
             if (u && !seen.has(u)) {
                 seen.add(u);
                 absoluteUrls.push(u);
+                // Capture the order date (seconds-based timestamp) for this URL when available.
+                if (o && typeof o.date === 'number' && Number.isFinite(o.date)) {
+                    urlToDateSeconds.set(u, o.date);
+                }
             }
         }
 
@@ -105,13 +113,27 @@ export async function saveReceipts({
             await page.goto(url, {waitUntil, timeout});
             await waitForPageSettled(page, timeout);
 
-            // Extract the purchase date text from the preview page DOM.
-            // On each page there is a span with the content "Date of purchase" and inside it a <b> element containing the date.
-            const purchaseDate = await extractPurchaseDate(page);
+            // Determine purchase date with priority on Orders API field `date` (seconds timestamp).
+            // Fallback to extracting from the page DOM when missing.
+            let purchaseDate = null;
+            const dateSec = urlToDateSeconds.get(url);
+            if (typeof dateSec === 'number' && Number.isFinite(dateSec)) {
+                try {
+                    // Format to YYYY-MM-DD for stable filenames.
+                    purchaseDate = new Date(dateSec * 1000).toISOString().slice(0, 10);
+                } catch {
+                    purchaseDate = null;
+                }
+            }
+            if (!purchaseDate) {
+                // Extract the purchase date text from the preview page DOM.
+                // On each page there is a span with the content "Date of purchase" and inside it a <b> element containing the date.
+                purchaseDate = await extractPurchaseDate(page);
+            }
 
             // Sanitize the date string for safe filenames and combine with token for uniqueness.
-            const token = url.split('/').filter(Boolean).pop() || 'receipt';
-            const baseName = makeReceiptFilename(token, purchaseDate);
+            const previewToken = url.split('/').filter(Boolean).pop() || 'receipt';
+            const baseName = makeReceiptFilename(previewToken, purchaseDate);
             const filePath = path.join(receiptsDir, `${baseName}.pdf`);
             await page.pdf({path: filePath, format: 'A4', printBackground});
             saved.push(filePath);
