@@ -1,6 +1,6 @@
 {
   "name": "gog-receipts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Linux-based Node.js tool and library for automatically downloading and archiving official GOG purchase receipts as PDFs.",
   "keywords": [
     "gog",
@@ -19,7 +19,7 @@
     "type": "git",
     "url": "git+https://github.com/mongoose4791/gog-receipts.git"
   },
-  "license": "Hippocratic HL3-CL-LAW-MIL-SOC-SV",
+  "license": "SSPL",
   "author": "mongoose4791 <mongoose4791@proton.me>",
   "type": "module",
   "main": "src/index.js",
