@@ -1,0 +1,46 @@
+# Prevent leaking development artifacts and secrets when publishing to npm
+
+# Project-local tooling and metadata
+.junie/
+.idea/
+.vscode/
+.github/
+
+# Logs and OS clutter
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# Temporary folders
+tmp/
+temp/
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Direct secret/token files (defense in depth; these should never be committed)
+loginCode.json
+token.json
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.cer
+*.der
+*.asc
+*.gpg
+*.pgp
+*.p8
+*.jks
+*.keystore
+
+# Test files and fixtures (not needed by consumers)
+**/*.test.js
+__tests__/
+src/**/__fixtures__/
