@@ -1,5 +1,43 @@
-# Node dependencies
+# Dependencies
 node_modules/
 
-# Editor/IDE
-.idea
+# Project-local tooling and metadata
+.idea/
+.vscode/
+.github/
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+
+# Logs and OS clutter
+.DS_Store
+Thumbs.db
+
+# Temporary folders
+tmp/
+temp/
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Direct secret/token files (defense in depth; these should never be committed)
+loginCode.json
+token.json
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.cer
+*.der
+*.asc
+*.gpg
+*.pgp
+*.p8
+*.jks
+*.keystore

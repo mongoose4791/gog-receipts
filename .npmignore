@@ -6,9 +6,11 @@
 .vscode/
 .github/
 
-# Logs and OS clutter
+# Logs
 npm-debug.log*
 yarn-error.log*
+
+# OS clutter
 .DS_Store
 Thumbs.db
 
