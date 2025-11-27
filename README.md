@@ -56,7 +56,7 @@ npm run browser:install
 
 ### 1. CLI Usage
 
-#### Main Command
+Run the CLI with the desired options:
 ```sh
 npm run cli -- [options]
 ```
@@ -73,13 +73,39 @@ Options:
 | `--headful`       |       | Run browser with UI                                                                | `false` (headless) |
 | `--help`          | `-h`  | Show help                                                                          |                    |
 
-#### Login flow only
+#### Command Examples
+
+Standard run: Downloads all receipts to the default `receipts` folder.
+    
+```sh
+npm run cli
+```
+
+Custom output directory: Saves PDFs to a specific folder (e.g., `my-docs`).
+    
+```sh
+npm run cli -- --receipts-dir ./my-docs
+```
+
+Visible browser (Headful): Runs the browser with the UI visible. Useful for debugging or seeing the process in action.
+    
+```sh
+npm run cli -- --headful
+```
+
+Increased timeout: Sets the navigation timeout to 120 seconds. Helpful for slow internet connections.
+
+```sh
+npm run cli -- --timeout 120000
+```
+
+Login flow only: Logs in to GOG and saves the token to the config file. Useful for running the script without downloading receipts.
 
 ```sh
 npm run cli -- login
 ```
 
-#### Run tests
+Run tests: Runs the test suite.
 
 ```sh
 npm test
