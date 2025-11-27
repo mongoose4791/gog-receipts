@@ -1,13 +1,17 @@
 # gog-receipts
 
 ![GitHub stars](https://img.shields.io/github/stars/mongoose4791/gog-receipts)
+![GitHub followers](https://img.shields.io/github/followers/mongoose4791?label=Follow)
 
-![GitHub issues](https://img.shields.io/github/issues/mongoose4791/gog-receipts?color=blue)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/mongoose4791/gog-receipts?color=blue)
-![Last commit](https://img.shields.io/github/last-commit/mongoose4791/gog-receipts?color=blue)
+![GitHub issues](https://img.shields.io/github/issues/mongoose4791/gog-receipts?color=forestgreen)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/mongoose4791/gog-receipts?color=forestgreen)
+![Last commit](https://img.shields.io/github/last-commit/mongoose4791/gog-receipts?color=forestgreen)
 
 ![License](https://img.shields.io/badge/license-SSPL-blue)
 ![Node](https://img.shields.io/badge/node-20%2B-blue)
+![Linux](https://img.shields.io/badge/platform-linux--only-blue)
+![npm](https://img.shields.io/npm/v/gog-receipts)
+
 
 ## About
 Retrieving official purchase receipts from GOG for tax purposes or digital preservation is a tedious, manual process of navigating order history and printing individual pages.
