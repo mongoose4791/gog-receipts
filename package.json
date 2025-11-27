@@ -1,6 +1,6 @@
 {
   "name": "gog-receipts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Linux-based Node.js tool and library for automatically downloading and archiving official GOG purchase receipts as PDFs.",
   "keywords": [
     "gog",
