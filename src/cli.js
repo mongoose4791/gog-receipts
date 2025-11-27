@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {saveReceipts} from './save-receipt/save-receipts.js';
 import {loginFlow} from './gog-login/gog-login.js';
+import {fetchOrders} from './gog-api/fetch-orders.js';
 
 /**
  * Print CLI help text to stdout.
@@ -79,6 +80,12 @@ function parseArgs(argv) {
             continue;
         }
 
+        // Experimental: simple API fetch helper
+        if (!opts.subcommand && (token === 'fetch-orders')) {
+            opts.subcommand = token;
+            continue;
+        }
+
         // No positional arguments supported (except for login's optional subArg handled above)
         if (!token.startsWith('-')) {
             console.error(`Unknown argument: ${token}`);
@@ -136,14 +143,20 @@ async function run() {
         process.exit(0);
     }
 
+    // Login flow (no external code/URL in default command)
+    const token = await loginFlow(args.subArg);
+
     // Handle subcommands first
     if (args.subcommand === 'login') {
-        await loginFlow(args.subArg);
         process.exit(0);
     }
 
-    // Login flow (no external code/URL in default command)
-    const token = await loginFlow();
+    // Experimental: simple API fetch helper
+    if (args.subcommand === 'fetch-orders') {
+        const data = await fetchOrders(token);
+        console.log(data);
+        process.exit(0);
+    }
 
     // Generate PDFs for all discovered receipt preview pages.
     const saved = await saveReceipts({
