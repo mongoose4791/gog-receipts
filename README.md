@@ -2,15 +2,17 @@
 
 ![GitHub stars](https://img.shields.io/github/stars/mongoose4791/gog-receipts)
 
-[![Hippocratic License HL3-CL-LAW-MIL-SOC-SV](https://img.shields.io/static/v1?label=Hippocratic%20License&message=HL3-CL-LAW-MIL-SOC-SV&labelColor=5e2751&color=bc8c3d)](https://firstdonoharm.dev/version/3/0/cl-law-mil-soc-sv.html)
-![Node version](https://img.shields.io/badge/node-%E2%89%A520-brightgreen)
-![GitHub issues](https://img.shields.io/github/issues/mongoose4791/gog-receipts)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/mongoose4791/gog-receipts)
-![Last commit](https://img.shields.io/github/last-commit/mongoose4791/gog-receipts)
+![GitHub issues](https://img.shields.io/github/issues/mongoose4791/gog-receipts?color=blue)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/mongoose4791/gog-receipts?color=blue)
+![Last commit](https://img.shields.io/github/last-commit/mongoose4791/gog-receipts?color=blue)
 
-A Linux-based Node.js tool and library for automatically downloading and archiving
-official [GOG](https://www.gog.com/) purchase receipts as PDFs. Designed for tax documentation
-and digital preservation, it can be used as a standalone CLI or integrated programmatically into other projects.
+![License](https://img.shields.io/badge/license-SSPL-blue)
+![Node](https://img.shields.io/badge/node-20%2B-blue)
+
+## About
+Retrieving official purchase receipts from GOG for tax purposes or digital preservation is a tedious, manual process of navigating order history and printing individual pages.
+
+This Linux-based Node.js tool automates the entire workflow. It logs in, discovers your orders, and archives official [GOG](https://www.gog.com/) receipts as PDFs. It supports usage as a standalone CLI or a library integrated into other projects.
 
 ## Compatibility
 
