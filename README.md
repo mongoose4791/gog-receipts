@@ -14,9 +14,11 @@
 
 
 ## About
-Retrieving official purchase receipts from GOG for tax purposes or digital preservation is a tedious, manual process of navigating order history and printing individual pages.
+Retrieving official purchase receipts from [GOG](https://www.gog.com/) for tax purposes or digital preservation is a
+tedious, manual process of navigating order history and printing individual pages.
 
-This Linux-based Node.js tool automates the entire workflow. It logs in, discovers your orders, and archives official [GOG](https://www.gog.com/) receipts as PDFs. It supports usage as a standalone CLI or a library integrated into other projects.
+This Linux-based Node.js tool automates the entire workflow. It logs in, discovers your orders, and archives your GOG
+receipts as PDFs. It supports usage as a standalone CLI or a library integrated into other projects.
 
 ## Compatibility
 
@@ -44,9 +46,8 @@ npm ci
 
 ### Install the browser used by Puppeteer
 
-This project uses [Puppeteer](https://pptr.dev/) with [Firefox](https://www.mozilla.org/firefox/) for automating receipt
-downloads. Install the managed Firefox binary once
-using the provided script:
+This project uses [Puppeteer](https://pptr.dev/) with [Firefox](https://www.mozilla.org/firefox/) for automating receipt downloads.
+Install the managed Firefox binary once using the provided script:
 
 ```sh
 npm run browser:install
@@ -146,6 +147,8 @@ Issues and pull requests are welcome on [GitHub](https://github.com/mongoose4791
 ## Roadmap
 
 - Secure token storage using system keychain (e.g., keytar).
-- Improve receipt link discovery to use a more robust API-based approach instead of web scraping.
 - Continue download on network errors.
 - Continue download after the process is interrupted (also redownload the last file just in case).
+- Cleanup
+- stdout vs logging
+- derive date from api

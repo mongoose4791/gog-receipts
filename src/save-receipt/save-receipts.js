@@ -1,18 +1,19 @@
 import puppeteer from 'puppeteer';
 import fs from 'node:fs';
 import path from 'node:path';
-import {waitForPageSettled, collectPreviewLinksAllPages, extractPurchaseDate} from './page-utils.js';
+import {waitForPageSettled, extractPurchaseDate} from './page-utils.js';
 import {makeReceiptFilename} from './filename.js';
-
-const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
+import {fetchOrders} from '../gog-api/fetch-orders.js';
 
 // Refactored: helpers moved to ./page-utils.js and ./filename.js
 
 /**
  * Save all GOG receipt preview pages as PDFs using Puppeteer.
  *
- * Note: The destination URL for discovery is fixed to the Orders page; this function
- * navigates there to discover all preview links and then renders each preview page to PDF.
+ * Discovery: Receipt preview URLs are sourced from the Orders API via fetchOrders().
+ * Each order contains a receiptLink like "/de/email/preview/<token>". We use the link as-is
+ * (locale preserved) and navigate to it when rendering the PDF. The function then renders
+ * each preview page to PDF.
  *
  * Filenames: Each PDF filename prefers the purchase date found on the receipt page
  * (span containing the text "Date of purchase" with a nested <b> date). The date is
@@ -37,24 +38,21 @@ const ORDERS_URL = 'https://www.gog.com/en/account/settings/orders';
  * @returns {Promise<string[]>} The list of saved PDF paths.
  */
 export async function saveReceipts({
-                                       receiptsDir = 'receipts',
-                                       printBackground = true,
-                                       viewport = {width: 1280, height: 800},
-                                       waitUntil = 'networkidle0',
-                                       timeout = 60000,
-                                       headless = true,
-                                       useToken = true,
-                                       token,
-                                       onProgress,
-                                   } = {}) {
-
-    // const browser = await puppeteer.launch({headless: false, product: 'firefox'});
+    receiptsDir = 'receipts',
+    printBackground = true,
+    viewport = {width: 1280, height: 800},
+    waitUntil = 'networkidle0',
+    timeout = 60000,
+    headless = true,
+    useToken = true,
+    token,
+    onProgress,
+} = {}) {
     const browser = await puppeteer.launch({
-        // product: 'firefox',
         headless,
         devtools: false,
         args: ['--no-sandbox', '--incognito', '--disable-web-security']
-    })
+    });
 
     try {
         const page = await browser.newPage();
@@ -68,19 +66,30 @@ export async function saveReceipts({
             }
         }
 
-        onProgress?.({type: 'navigating', url: ORDERS_URL});
-        await page.goto(ORDERS_URL, {waitUntil, timeout});
+        // Fetch orders via API and derive receipt preview URLs from the receiptLink field
+        const data = await fetchOrders(typeof token === 'string' ? {access_token: token} : token);
+        const orders = Array.isArray(data?.orders) ? data.orders : [];
 
-        // Wait until the page is fully settled before scraping/generating output.
-        await waitForPageSettled(page, timeout);
+        /** @type {string[]} */
+        const absoluteUrls = [];
+        const seen = new Set();
+        for (const o of orders) {
+            const href = o?.receiptLink;
+            if (typeof href !== 'string' || href.length === 0) {
+                continue;
+            }
+            let u = null;
+            try {
+                u = new URL(href, 'https://www.gog.com').href;
+            } catch {
+                u = null;
+            }
+            if (u && !seen.has(u)) {
+                seen.add(u);
+                absoluteUrls.push(u);
+            }
+        }
 
-        // Collect preview links by pattern across all paginated Orders pages if present.
-        const absoluteUrls = await collectPreviewLinksAllPages(
-            page,
-            waitUntil,
-            timeout,
-            (info) => onProgress?.(info)
-        );
         onProgress?.({type: 'found', count: absoluteUrls.length});
 
         // Ensure output directory exists.
