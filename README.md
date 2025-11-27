@@ -20,6 +20,9 @@ tedious, manual process of navigating order history and printing individual page
 This Linux-based Node.js tool automates the entire workflow. It logs in, discovers your orders, and archives your GOG
 receipts as PDFs. It supports usage as a standalone CLI or a library integrated into other projects.
 
+Under the hood, orders are parsed and receipts are downloaded sequentially in a single pass to keep memory usage low and
+to maintain a stable authenticated browser context.
+
 ## Compatibility
 
 - Operating system: Linux only. Windows and macOS are not supported.
@@ -111,6 +114,13 @@ Run tests: Runs the test suite.
 ```sh
 npm test
 ```
+
+### Internals
+
+- Puppeteer logic is encapsulated in `src/puppeteer/puppeteer.js`.
+  - `launchAndPreparePage(options)` starts the browser, creates a page, applies viewport, and optionally sets the Authorization header using the provided token.
+  - `waitForPageSettled(page, timeout)` waits for network-idle, fonts, and a couple of RAFs to improve print stability before saving PDFs.
+  These helpers are used by `saveReceipts` and are exported via `src/index.js` for advanced usage.
 
 ### 2. Library Usage
     
