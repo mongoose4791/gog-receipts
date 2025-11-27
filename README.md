@@ -147,3 +147,5 @@ Issues and pull requests are welcome on [GitHub](https://github.com/mongoose4791
 
 - Secure token storage using system keychain (e.g., keytar).
 - Improve receipt link discovery to use a more robust API-based approach instead of web scraping.
+- Continue download on network errors.
+- Continue download after the process is interrupted (also redownload the last file just in case).
